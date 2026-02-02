@@ -83,12 +83,23 @@
 <div id="game-screen" class="hidden">
     <div class="rules-sidebar">
         <h3>LUẬT CHƠI</h3>
-        <b>1. Mục tiêu:</b> Thu thập các lá cùng team để ghi điểm<br><br>
-        <b>2. Điểm:</b> <br>
-        - Mỗi lá thu thập: +1 điểm<br>
-        - Đủ team: +5 điểm thưởng<br>
-        - Lá lẻ trên tay khi kết thúc: -2 điểm<br>
-        <i>(Lá lẻ ở khu "Đã tìm thấy" không bị trừ)</i>
+        <b>1. Mục tiêu:</b> Thu thập và xếp các lá bài theo đúng team (có liên kết) để ghi điểm<br><br>
+        <b>2. Chia bài:</b><br>
+        - Mỗi người: 7 lá bài trên tay<br>
+        - Giữa bàn: 8 lá bài ngửa<br>
+        - Phần còn lại: bài úp để rút<br><br>
+        <b>3. Lượt chơi & cách lấy bài:</b><br>
+        - Mỗi lượt có 15 giây<br>
+        - Toàn bộ các lá cùng team (có liên kết) sẽ được chuyển vào khu “Đã tìm thấy nhau”.<br>
+        - Hết bài trên tay: bắt buộc rút bài<br>
+        - Chỉ được chọn 1 trong 2 hành động:<br>
+        * <u>Lấy bài trên bàn</u>: Nếu bài trên tay hoặc bài trong khu “Đã tìm thấy nhau” có liên kết với bất kỳ lá nào trên bàn -> được lấy lá đó. (Bắt buộc phải có liên kết mới được lấy)<br>
+        * <u>Rút bài úp</u>: Được rút khi không thể lấy bài trên bàn hoặc chủ động không lấy. Sau khi rút có thể bỏ qua hoặc giữ lại trên tay.<br><br>
+        <b>4. Kết thúc & tính điểm:</b><br>
+        Ván kết thúc khi hết toàn bộ bài hoặc không thể rút/liên kết thêm.<br>
+        - Mỗi liên kết: <b>+1 điểm</b><br>
+        - Đủ team: <b>+5 điểm</b><br>
+        - Mỗi lá lẻ trên tay: <b>-2 điểm</b>
     </div>
 
     <div class="play-main">
@@ -111,7 +122,6 @@
         return `https://lh3.googleusercontent.com/u/0/d/${id}`;
     }
 
-    // Đã khôi phục phần FETCH data.json
     window.onload = async () => {
         const localData = localStorage.getItem('at_v23_data');
         if(localData) {
@@ -276,7 +286,6 @@
         nextTurn(); 
     }
 
-    // Cơ chế vét bài cuối trận
     function autoMoveToEnd(playerHand, playerCap) {
         let changed = true;
         while(changed) {
