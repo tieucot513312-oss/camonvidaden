@@ -39,7 +39,7 @@
         .card-mini { width: 45px; height: 64px; border-radius: 4px; flex-shrink: 0; }
         .card-mini .c-name { font-size: 7px; display: flex; height: 25%; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 999; display: flex; justify-content: center; align-items: center; }
-        .modal-content { background: #222; padding: 20px; border-radius: 12px; border: 2px solid var(--accent); text-align: center; width: 300px; }
+        .modal-content { background: #222; padding: 20px; border-radius: 12px; border: 2px solid var(--accent); text-align: center; width: 320px; }
         .side-bar { padding: 10px; background: #111; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; scrollbar-width: thin; border-left: 1px solid #222; }
         .team-tag { padding: 5px; border: 1px solid #333; border-radius: 4px; color: #666; font-size: 11px; text-align: center; background: #151515; }
         .team-tag.active { border-color: #ff4757; color: #ff4757; background: rgba(255, 71, 87, 0.1); font-weight: bold; }
@@ -58,6 +58,18 @@
     </div>
 </div>
 
+<div id="end-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h2 style="color:var(--accent); margin-top:0;">KẾT QUẢ VÁN ĐẤU</h2>
+        <div id="final-stats" style="margin: 20px 0; font-size: 18px; line-height: 2;">
+            <div id="final-ai" style="color:#ff4757; font-weight:bold;"></div>
+            <div id="final-p" style="color:#2ecc71; font-weight:bold;"></div>
+            <div id="final-winner" style="color:#f1c40f; margin-top:10px; font-size:16px; border-top:1px solid #444; padding-top:10px;"></div>
+        </div>
+        <button class="btn" style="background:#3498db; font-size:16px; padding:12px;" onclick="confirmReset()">BẮT ĐẦU VÁN MỚI</button>
+    </div>
+</div>
+
 <div id="pause-modal" class="modal-overlay hidden"><div class="modal-content"><h2 style="color:var(--accent);">☕ NGHỈ GIẢI LAO</h2><button class="btn" style="background:#3498db;" onclick="resumeGame()">OK TIẾP TỤC ▶</button></div></div>
 <div id="reset-modal" class="modal-overlay hidden"><div class="modal-content"><h2 style="color:#ff4757;">⚠️ CẢNH BÁO</h2><p>Chắc chưa?</p><div style="display:flex; gap:10px;"><button class="btn" style="background:#e74c3c; flex:1;" onclick="confirmReset()">CHẮC RỒI</button><button class="btn" style="background:#95a5a6; flex:1;" onclick="closeReset()">THÔI CHƠI TIẾP</button></div></div></div>
 
@@ -73,47 +85,18 @@
 <div id="game-screen" class="hidden">
     <div class="rules-sidebar">
         <h3>LUẬT CHƠI</h3>
-        <b>1. Mục tiêu:</b> Thu thập và xếp các lá bài theo đúng team (có liên kết) để ghi điểm<br><br>
-        
-        <b>2. Chia bài:</b><br>
-        - Mỗi người: 7 lá bài trên tay<br>
-        - Giữa bàn: 8 lá bài ngửa<br>
-        - Phần còn lại: bài úp để rút<br><br>
-
-        <b>3. Lượt chơi & cách lấy bài</b><br>
-        - Mỗi lượt có 15 giây<br>
-        - Toàn bộ các lá cùng team (có liên kết) sẽ được chuyển vào khu “Đã tìm thấy nhau”.<br>
-        - Hết bài trên tay: bắt buộc rút bài<br>
-        - Chỉ được chọn 1 trong 2 hành động:<br>
-        <em style="color:#f1c40f">* Lấy bài trên bàn:</em><br>
-        <span style="font-size:12px; color:#aaa; display:block; padding-left:10px;">
-        > Nếu bài trên tay hoặc bài trong khu “Đã tìm thấy nhau” có liên kết với bất kỳ lá nào trên bàn → được lấy lá đó.<br>
-        > Bắt buộc phải có bài liên kết thì mới được lấy bài trên bàn.<br>
-        => Nếu không có liên kết → không được lấy, phải rút bài.
-        </span>
-        <em style="color:#f1c40f">* Rút bài úp:</em><br>
-        <span style="font-size:12px; color:#aaa; display:block; padding-left:10px;">
-        > Được rút khi: không thể lấy bài trên bàn hoặc chủ động không lấy bài trên bàn<br>
-        > Sau khi rút: Có thể bỏ qua, hoặc giữ lại trên tay (không cần liên kết vẫn giữ được)
-        </span><br>
-
-        <b>4. Kết thúc & tính điểm:</b><br>
-        Ván đấu kết thúc khi:<br>
-        - Hết toàn bộ bài: không còn bài trải trên bàn và bài rút.<br>
-        - Còn bài nhưng không thể rút:<br>
-        + Đã hết bài rút nhưng bài sở hữu của cả 2 không có liên kết với bài trên bàn<br>
-        + Một phe hết bài + hết bài rút.<br><br>
-      
-        Điểm được tính như sau:<br>
-        - Mỗi liên kết tìm được: +1 điểm<br>
-        - Mỗi team thu thập đủ: +5 điểm<br>
-        - Mỗi lá không tìm được liên kết: -2 điểm
+        <b>1. Mục tiêu:</b> Thu thập và xếp các lá bài theo đúng team để ghi điểm<br><br>
+        <b>2. Lượt chơi:</b> 15s/lượt. Thu thập bài có liên kết vào khu vực "Đã tìm thấy nhau".<br><br>
+        <b>3. Điểm số:</b><br>
+        - Mỗi lá thu thập: +1đ<br>
+        - Đủ 1 Team (của riêng mình): +5đ<br>
+        - Kết thúc: Bài lẻ trên tay bị trừ 2đ/lá. Bài lẻ trong khu "Đã tìm thấy nhau" không bị trừ.<br>
     </div>
 
     <div class="play-main">
-        <div class="play-area"><div id="ai-hand" class="card-row-scroll"></div><div class="captured-zone"><div class="zone-label"><span>Đã tìm thấy nhau</span> <span id="score-ai" style="color:#ff4757">0</span></div><div id="ai-captured" class="captured-list"></div></div></div>
+        <div class="play-area"><div id="ai-hand" class="card-row-scroll"></div><div class="captured-zone"><div class="zone-label"><span>Anh Tài</span> <span id="score-ai" style="color:#ff4757">0</span></div><div id="ai-captured" class="captured-list"></div></div></div>
         <div class="play-area"><div id="board" class="card-row-scroll"></div></div>
-        <div class="play-area"><div class="captured-zone"><div class="zone-label"><span>Đã tìm thấy nhau</span> <span id="score-p" style="color:#2ecc71">0</span></div><div id="p-captured" class="captured-list"></div></div><div id="p-hand" class="card-row-scroll"></div></div>
+        <div class="play-area"><div class="captured-zone"><div class="zone-label"><span>Gai Con</span> <span id="score-p" style="color:#2ecc71">0</span></div><div id="p-captured" class="captured-list"></div></div><div id="p-hand" class="card-row-scroll"></div></div>
         <div class="right-controls"><div class="circle-ui"><div id="timer-val">15</div><div class="timer-label">GIÂY</div></div><div id="turn-circle" class="circle-ui p-active"><div id="turn-indicator">GAI<br>CON</div></div><div id="draw-pile" onclick="playerDraw()"><span id="draw-count"></span></div></div>
     </div>
     <div class="side-bar"><h4 style="text-align:center; color:var(--accent);">TIẾN ĐỘ TEAM</h4><div id="side-teams" class="scroll-v" style="height:450px;"></div><button class="btn" style="background:#3498db;" onclick="togglePause()">Tạm dừng</button><button class="btn" style="background:#9b59b6;" onclick="resetGame()">Làm lại</button></div>
@@ -138,15 +121,6 @@ window.onload = async () => {
         teams = d.teams || [];
         cardBack = d.cardBack || "";
     }
-    try {
-        const res = await fetch('./data.json?t=' + Date.now());
-        if (res.ok) {
-            const data = await res.json();
-            if(!cardBack) cardBack = data.cardBack || "";
-            if(teams.length === 0) teams = data.teams || [];
-            if(Object.keys(at_images).length === 0) at_images = data.images || {};
-        }
-    } catch (e) { console.log("Dùng dữ liệu Local."); }
     renderAdmin();
 };
 
@@ -182,6 +156,7 @@ window.onload = async () => {
 
     function startGame() {
         document.getElementById('admin-panel').classList.add('hidden');
+        document.getElementById('end-modal').classList.add('hidden');
         document.getElementById('game-screen').classList.remove('hidden');
         let fullDeck = AT_NAMES.map((n, i) => ({ id: i+1, name: n, img: drive(at_images[i+1]) }));
         fullDeck.sort(() => Math.random() - 0.5);
@@ -192,10 +167,16 @@ window.onload = async () => {
         updateUI(); startTimer();
     }
 
-    function calculateScore(captured, isFinal = false) {
+    function calculateScore(captured, hand = [], isFinal = false) {
         let s = captured.length;
-        teams.forEach(t => { if(t.members.every(mId => captured.some(c => c.id === mId))) s += 5; });
-        if(isFinal) { captured.forEach(c => { let linked = false; teams.filter(t => t.members.includes(c.id)).forEach(t => { if(t.members.every(mId => captured.some(cap => cap.id === mId))) linked = true; }); if(!linked) s -= 2; }); }
+        // Thưởng Team: Chỉ sáng đèn nếu toàn bộ team nằm trong Captured của cùng 1 người
+        teams.forEach(t => { 
+            if(t.members.every(mId => captured.some(c => c.id === mId))) s += 5; 
+        });
+        // Phạt bài lẻ: Chỉ trừ những lá còn sót lại trên tay
+        if(isFinal) { 
+            s -= (hand.length * 2);
+        }
         return s;
     }
 
@@ -210,10 +191,13 @@ window.onload = async () => {
         document.getElementById('draw-count').innerText = game.deck.length;
         if(cardBack) pile.style.backgroundImage = `url('${drive(cardBack)}')`;
 
-        const isTeamDone = (cId) => {
-            const team = teams.find(t => t.members.includes(cId));
-            return team ? team.members.every(mId => [...game.pCap, ...game.aiCap].some(cap => cap.id === mId)) : false;
-        };
+        // Sáng đèn team: Phải đủ bộ trong tổng bài đã thu thập (Cap) của 1 trong 2 người
+        teams.forEach(t => { 
+            const pHas = t.members.every(mId => game.pCap.some(c => c.id === mId));
+            const aiHas = t.members.every(mId => game.aiCap.some(c => c.id === mId));
+            const el = document.getElementById(`tag-${t.name.replace(/\s/g,'')}`); 
+            if(el) el.className = (pHas || aiHas) ? 'team-tag active' : 'team-tag'; 
+        });
 
         const cardH = (c, isP) => `<div class="card ${game.selected === c.id ? 'selected' : ''}" onclick="${isP ? `selectCard(${c.id})` : ''}"><img class="c-img-front" src="${c.img}"><div class="c-name">${c.name}</div></div>`;
         const aiH = cardBack ? `<div class="card"><img src="${drive(cardBack)}"></div>` : `<div class="card" style="background:#222;"></div>`;
@@ -228,15 +212,14 @@ window.onload = async () => {
             return `<div class="card ${isHighlight ? 'highlight' : ''}" onclick="takeCard(${c.id})"><img class="c-img-front" src="${c.img}"><div class="c-name">${c.name}</div></div>`;
         }).join('');
 
-        const mini = (c) => `<div class="card card-mini ${isTeamDone(c.id) ? 'team-done' : ''}"><img src="${c.img}"><div class="c-name">${c.name}</div></div>`;
+        const mini = (c) => {
+            const team = teams.find(t => t.members.includes(c.id));
+            const isDone = team ? team.members.every(mId => game.pCap.some(cap => cap.id === mId) || game.aiCap.some(cap => cap.id === mId)) : false;
+            return `<div class="card card-mini ${isDone ? 'team-done' : ''}"><img src="${c.img}"><div class="c-name">${c.name}</div></div>`;
+        };
         document.getElementById('p-captured').innerHTML = game.pCap.map(mini).join('');
         document.getElementById('ai-captured').innerHTML = game.aiCap.map(mini).join('');
         
-        teams.forEach(t => { 
-            const ok = t.members.every(mId => [...game.pCap, ...game.aiCap].some(c => c.id === mId)); 
-            const el = document.getElementById(`tag-${t.name.replace(/\s/g,'')}`); 
-            if(el) el.className = ok ? 'team-tag active' : 'team-tag'; 
-        });
         checkEndGame();
     }
 
@@ -261,39 +244,20 @@ window.onload = async () => {
     function playerDraw() { if(game.turn !== 'p' || isPaused || game.deck.length === 0) return;
         clearInterval(game.iv); game.tempDraw = game.deck.shift(); document.getElementById('decision-modal').classList.remove('hidden'); document.getElementById('modal-img').src = game.tempDraw.img; }
     
-    // CẬP NHẬT GAMEPLAY: Logic rút bài theo yêu cầu
     function resolveDraw(isK) { 
         document.getElementById('decision-modal').classList.add('hidden'); 
         let c = game.tempDraw;
         if(isK) { 
-            // 1. Kiểm tra lá vừa rút có team với Đã tìm thấy nhau không
             let inCap = game.pCap.some(pc => teams.some(t => t.members.includes(pc.id) && t.members.includes(c.id)));
-            // 2. Kiểm tra lá vừa rút có team với bài đang có (trên tay) không
             let inHandMatch = game.pHand.find(ph => teams.some(t => t.members.includes(ph.id) && t.members.includes(c.id)));
-            // Bổ sung: Kiểm tra lá vừa rút có team với bài trên bàn không (để không bị sót bài)
             let inBoardMatch = game.board.find(bc => teams.some(t => t.members.includes(bc.id) && t.members.includes(c.id)));
 
-            if (inCap) {
-                // Nếu lá vừa rút có team với Đã tìm thấy nhau -> chuyển lá đó vào Đã tìm thấy nhau
-                game.pCap.push(c);
-            } else if (inHandMatch) {
-                // Nếu lá vừa rút có team với bài đang có -> chuyển lá vừa rút và lá dưới bài đang có lên Đã tìm thấy nhau
-                game.pCap.push(c, inHandMatch);
-                game.pHand = game.pHand.filter(x => x.id !== inHandMatch.id);
-            } else if (inBoardMatch) {
-                // Nếu lá vừa rút có team với bài trên bàn -> Thu thập luôn (đảm bảo gameplay linh hoạt)
-                game.pCap.push(c, inBoardMatch);
-                game.board = game.board.filter(x => x.id !== inBoardMatch.id);
-            } else {
-                // Nếu không có team ở bài đang có hoặc Đã tìm thấy nhau -> chuyển lá đó vào bài đang có (tay)
-                game.pHand.push(c);
-            }
-        } else { 
-            // Nếu chọn "Tạm xa nhau" -> bỏ ra bàn
-            game.board.push(c); 
-        } 
-        game.tempDraw = null; 
-        nextTurn(); 
+            if (inCap) game.pCap.push(c);
+            else if (inHandMatch) { game.pCap.push(c, inHandMatch); game.pHand = game.pHand.filter(x => x.id !== inHandMatch.id); }
+            else if (inBoardMatch) { game.pCap.push(c, inBoardMatch); game.board = game.board.filter(x => x.id !== inBoardMatch.id); }
+            else game.pHand.push(c);
+        } else { game.board.push(c); } 
+        game.tempDraw = null; nextTurn(); 
     }
     
     function startTimer() { clearInterval(game.iv); game.time = 15; document.getElementById('timer-val').innerText = game.time;
@@ -308,51 +272,82 @@ window.onload = async () => {
         for (let ah of game.aiHand) {
             let target = game.board.find(bc => teams.some(t => t.members.includes(ah.id) && t.members.includes(bc.id)));
             if (target) {
-                game.aiCap.push(ah, target);
-                game.aiHand = game.aiHand.filter(x => x.id !== ah.id);
-                game.board = game.board.filter(x => x.id !== target.id);
-                acted = true; break;
+                game.aiCap.push(ah, target); game.aiHand = game.aiHand.filter(x => x.id !== ah.id);
+                game.board = game.board.filter(x => x.id !== target.id); acted = true; break;
             }
         }
         if (!acted) {
             let target = game.board.find(bc => game.aiCap.some(ac => teams.some(t => t.members.includes(ac.id) && t.members.includes(bc.id))));
-            if (target) {
-                game.aiCap.push(target);
-                game.board = game.board.filter(x => x.id !== target.id);
-                acted = true;
-            }
+            if (target) { game.aiCap.push(target); game.board = game.board.filter(x => x.id !== target.id); acted = true; }
         }
         if (!acted && game.deck.length > 0) {
             let c = game.deck.shift();
             let linkBoard = game.board.find(bc => teams.some(t => t.members.includes(c.id) && t.members.includes(bc.id)));
             let linkCap = game.aiCap.some(ac => teams.some(t => t.members.includes(ac.id) && t.members.includes(c.id)));
             let linkHand = game.aiHand.find(ah => teams.some(t => t.members.includes(ah.id) && t.members.includes(c.id)));
-
-            if (linkCap) {
-                game.aiCap.push(c);
-            } else if (linkHand) {
-                game.aiCap.push(c, linkHand);
-                game.aiHand = game.aiHand.filter(x => x.id !== linkHand.id);
-            } else if (linkBoard) {
-                game.aiCap.push(c, linkBoard);
-                game.board = game.board.filter(x => x.id !== linkBoard.id);
-            } else {
-                if (game.aiHand.length > 8) game.board.push(c);
-                else game.aiHand.push(c);
-            }
+            if (linkCap) game.aiCap.push(c);
+            else if (linkHand) { game.aiCap.push(c, linkHand); game.aiHand = game.aiHand.filter(x => x.id !== linkHand.id); }
+            else if (linkBoard) { game.aiCap.push(c, linkBoard); game.board = game.board.filter(x => x.id !== linkBoard.id); }
+            else { if (game.aiHand.length > 8) game.board.push(c); else game.aiHand.push(c); }
             acted = true;
         }
         nextTurn(); 
     }
     
-    function checkEndGame() { if((game.board.length === 0 && game.deck.length === 0) || (game.deck.length === 0 && (game.pHand.length === 0 || game.aiHand.length === 0))) { clearInterval(game.iv);
-        let pF = calculateScore(game.pCap, true), aF = calculateScore(game.aiCap, true); setTimeout(() => alert(`Kết thúc!\nBạn: ${pF}đ\nAI: ${aF}đ`), 500);
-    } }
+    function checkEndGame() { 
+        if((game.board.length === 0 && game.deck.length === 0) || (game.deck.length === 0 && (game.pHand.length === 0 || game.aiHand.length === 0))) { 
+            clearInterval(game.iv);
+            
+            // Xử lý bài trên tay trước khi tính điểm cuối cùng
+            const processHandToCap = (hand, cap) => {
+                let changed = true;
+                while(changed) {
+                    changed = false;
+                    // 1. Bài đang có có team với Đã tìm thấy nhau
+                    for(let i=0; i<hand.length; i++) {
+                        if(cap.some(c => teams.some(t => t.members.includes(c.id) && t.members.includes(hand[i].id)))) {
+                            cap.push(hand.splice(i, 1)[0]);
+                            changed = true; break;
+                        }
+                    }
+                    if(changed) continue;
+                    // 2. Hai lá bài đang có cùng team
+                    for(let i=0; i<hand.length; i++) {
+                        for(let j=i+1; j<hand.length; j++) {
+                            if(teams.some(t => t.members.includes(hand[i].id) && t.members.includes(hand[j].id))) {
+                                cap.push(hand.splice(j, 1)[0], hand.splice(i, 1)[0]);
+                                changed = true; break;
+                            }
+                        }
+                        if(changed) break;
+                    }
+                }
+            };
+
+            processHandToCap(game.pHand, game.pCap);
+            processHandToCap(game.aiHand, game.aiCap);
+
+            let pFinal = calculateScore(game.pCap, game.pHand, true);
+            let aiFinal = calculateScore(game.aiCap, game.aiHand, true);
+            
+            // Hiển thị Popup
+            document.getElementById('final-ai').innerText = `Anh Tài: ${aiFinal}`;
+            document.getElementById('final-p').innerText = `Gai Con: ${pFinal}`;
+            let winner = pFinal > aiFinal ? "Gai Con" : (aiFinal > pFinal ? "Anh Tài" : "Hòa nhau");
+            document.getElementById('final-winner').innerText = winner === "Hòa nhau" ? "Kết quả: Hòa nhau!" : `Chúc mừng người chiến thắng là ${winner}`;
+            
+            setTimeout(() => { document.getElementById('end-modal').classList.remove('hidden'); }, 800);
+        } 
+    }
     
     function togglePause() { isPaused = true; document.getElementById('pause-modal').classList.remove('hidden'); }
     function resumeGame() { isPaused = false; document.getElementById('pause-modal').classList.add('hidden'); }
     function resetGame() { document.getElementById('reset-modal').classList.remove('hidden'); }
-    function confirmReset() { document.getElementById('reset-modal').classList.add('hidden'); startGame(); }
+    function confirmReset() { 
+        document.getElementById('reset-modal').classList.add('hidden'); 
+        document.getElementById('end-modal').classList.add('hidden');
+        startGame(); 
+    }
     function closeReset() { document.getElementById('reset-modal').classList.add('hidden'); }
 </script>
 </body>
