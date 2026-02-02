@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <title>ATVNCG - Final Edition</title>
     <style>
+        #admin-panel { 
+    display: none; /* Thêm dòng này để mặc định ẩn ngay từ đầu */
+    background: #1a1a1a; 
+    padding: 15px; 
+    border-bottom: 3px solid #333; 
+    /* ... các thuộc tính khác giữ nguyên ... */
+}
         :root { --bg: #0a0a0a; --accent: #f1c40f; --card-w: 72px; --card-h: 100px; --panel-bg: #111; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; overflow: hidden; }
         #admin-panel { background: #1a1a1a; padding: 15px; border-bottom: 3px solid #333; height: auto; max-height: 90vh; overflow-y: auto; z-index: 1000; position: relative; }
@@ -123,6 +130,7 @@
     }
 
     window.onload = async () => {
+    // 1. Lấy dữ liệu (giữ nguyên đoạn fetch dữ liệu của bạn)
     const localData = localStorage.getItem('at_v23_data');
     if(localData) {
         const d = JSON.parse(localData);
@@ -140,16 +148,15 @@
         }
     } catch (e) { console.log("Dùng dữ liệu Local."); }
 
-    // --- ĐOẠN CODE THÊM MỚI TẠI ĐÂY ---
+    // 2. Kiểm tra URL để hiển thị giao diện phù hợp
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('play') === 'true') {
-        // Nếu có ?play=true, khởi chạy game luôn
-        startGame(); 
+        startGame(); // Hàm này sẽ tự mở #game-screen
     } else {
-        // Nếu không, mới hiện bảng Admin
+        // Nếu không chơi ngay, thì mới hiện Admin Panel ra
+        document.getElementById('admin-panel').style.display = 'block';
         renderAdmin();
     }
-    // ----------------------------------
 };
 
     function renderAdmin() {
@@ -348,4 +355,5 @@
 </script>
 </body>
 </html>
+
 
