@@ -148,6 +148,10 @@ window.onload = async () => {
         }
     } catch (e) { console.log("Dùng dữ liệu Local."); }
     renderAdmin();
+
+    // SỬA ĐIỀU 1: Tự động khởi động nếu link có ?play=true
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('play') === 'true') { startGame(); }
 };
 
     function renderAdmin() {
@@ -221,11 +225,11 @@ window.onload = async () => {
         document.getElementById('p-hand').innerHTML = game.pHand.map(c => cardH(c, true)).join('');
         document.getElementById('ai-hand').innerHTML = game.aiHand.map(() => aiH).join('');
         
-        // SỬA LỖI HIGHLIGHT: Kiểm tra liên kết với lá đang chọn HOẶC bài đã thu thập
+        // HIGHLIGHT: Sửa theo Điều 3
         document.getElementById('board').innerHTML = game.board.map(c => {
-            const linkWithSelected = game.selected && teams.some(t => t.members.includes(game.selected) && t.members.includes(c.id));
+            const linkWithHand = game.pHand.some(ph => teams.some(t => t.members.includes(ph.id) && t.members.includes(c.id)));
             const linkWithCap = game.pCap.some(pc => teams.some(t => t.members.includes(pc.id) && t.members.includes(c.id)));
-            const isHighlight = (game.turn === 'p' && (linkWithSelected || linkWithCap));
+            const isHighlight = (game.turn === 'p' && (linkWithHand || linkWithCap));
             return `<div class="card ${isHighlight ? 'highlight' : ''}" onclick="takeCard(${c.id})"><img class="c-img-front" src="${c.img}"><div class="c-name">${c.name}</div></div>`;
         }).join('');
 
@@ -243,37 +247,53 @@ window.onload = async () => {
 
     function selectCard(id) { if(game.turn === 'p') { game.selected = (game.selected === id) ? null : id; updateUI(); } }
 
+    // SỬA ĐIỀU 3: Click bài trên bàn tự động tìm liên kết trong tay hoặc Captured
     function takeCard(bId) {
         if(game.turn !== 'p' || isPaused) return;
         const bc = game.board.find(x => x.id === bId);
-        // Ưu tiên ăn bằng bài đã thu thập
-        const mMatchCap = game.pCap.some(pc => teams.some(t => t.members.includes(pc.id) && t.members.includes(bId)));
-        if(mMatchCap) { game.pCap.push(bc); game.board = game.board.filter(x => x.id !== bId); nextTurn(); return; }
-        // Ăn bằng bài trên tay
-        if(game.selected) { 
-            const matchHand = teams.some(t => t.members.includes(game.selected) && t.members.includes(bId));
-            if(matchHand) { 
-                game.pCap.push(bc, game.pHand.find(x => x.id === game.selected)); 
+        
+        const matchCap = game.pCap.find(pc => teams.some(t => t.members.includes(pc.id) && t.members.includes(bId)));
+        if(matchCap) { 
+            game.pCap.push(bc); 
+            game.board = game.board.filter(x => x.id !== bId); 
+            nextTurn(); return; 
+        }
+        
+        if(game.selected) {
+            const matchSelected = teams.some(t => t.members.includes(game.selected) && t.members.includes(bId));
+            if(matchSelected) {
+                game.pCap.push(bc, game.pHand.find(x => x.id === game.selected));
                 game.board = game.board.filter(x => x.id !== bId);
-                game.pHand = game.pHand.filter(x => x.id !== game.selected); 
-                game.selected = null; nextTurn(); 
-            } 
+                game.pHand = game.pHand.filter(x => x.id !== game.selected);
+                game.selected = null; nextTurn(); return;
+            }
+        }
+
+        const matchHand = game.pHand.find(ph => teams.some(t => t.members.includes(ph.id) && t.members.includes(bId)));
+        if(matchHand) {
+            game.pCap.push(bc, matchHand);
+            game.board = game.board.filter(x => x.id !== bId);
+            game.pHand = game.pHand.filter(x => x.id !== matchHand.id);
+            nextTurn();
         }
     }
 
     function playerDraw() { if(game.turn !== 'p' || isPaused || game.deck.length === 0) return;
         clearInterval(game.iv); game.tempDraw = game.deck.shift(); document.getElementById('decision-modal').classList.remove('hidden'); document.getElementById('modal-img').src = game.tempDraw.img; }
     
-    // SỬA LỖI RÚT BÀI: Tự động thu thập nếu cùng team với "Đã tìm thấy nhau"
+    // SỬA ĐIỀU 2: Rút bài kiểm tra liên kết với Board và Captured
     function resolveDraw(isK) { 
         document.getElementById('decision-modal').classList.add('hidden'); 
         let c = game.tempDraw;
         if(isK) { 
-            let inCap = game.pCap.some(pc => teams.some(t => t.members.includes(pc.id) && t.members.includes(c.id)));
-            let inBoard = game.board.find(bc => teams.some(t => t.members.includes(c.id) && t.members.includes(bc.id)));
+            let linkCap = game.pCap.some(pc => teams.some(t => t.members.includes(pc.id) && t.members.includes(c.id)));
+            let linkBoard = game.board.find(bc => teams.some(t => t.members.includes(c.id) && t.members.includes(bc.id)));
             
-            if(inCap) { game.pCap.push(c); }
-            else if(inBoard) { game.pCap.push(c, inBoard); game.board = game.board.filter(x => x.id !== inBoard.id); }
+            if(linkCap) { game.pCap.push(c); } 
+            else if(linkBoard) { 
+                game.pCap.push(c, linkBoard); 
+                game.board = game.board.filter(x => x.id !== linkBoard.id); 
+            } 
             else { game.pHand.push(c); }
         } else { game.board.push(c); } 
         game.tempDraw = null; nextTurn(); 
@@ -285,12 +305,9 @@ window.onload = async () => {
     
     function nextTurn() { game.turn = (game.turn === 'p' ? 'ai' : 'p'); updateUI(); startTimer(); }
     
-    // NÂNG CẤP AI: Chiến thuật và linh hoạt hơn
     function aiMove() { 
         if (isPaused) return;
         let acted = false;
-
-        // 1. Ưu tiên ăn bài trên bàn bằng bài trên tay (để giải phóng bài tay)
         for (let ah of game.aiHand) {
             let target = game.board.find(bc => teams.some(t => t.members.includes(ah.id) && t.members.includes(bc.id)));
             if (target) {
@@ -300,8 +317,6 @@ window.onload = async () => {
                 acted = true; break;
             }
         }
-
-        // 2. Ăn bài trên bàn bằng khu vực đã thu thập
         if (!acted) {
             let target = game.board.find(bc => game.aiCap.some(ac => teams.some(t => t.members.includes(ac.id) && t.members.includes(bc.id))));
             if (target) {
@@ -310,26 +325,20 @@ window.onload = async () => {
                 acted = true;
             }
         }
-
-        // 3. Nếu không ăn được gì, tiến hành rút bài
         if (!acted && game.deck.length > 0) {
             let c = game.deck.shift();
             let linkBoard = game.board.find(bc => teams.some(t => t.members.includes(c.id) && t.members.includes(bc.id)));
             let linkCap = game.aiCap.some(ac => teams.some(t => t.members.includes(ac.id) && t.members.includes(c.id)));
-
-            if (linkCap) {
-                game.aiCap.push(c); // Tự động thu thập nếu cùng team đã có
-            } else if (linkBoard) {
-                game.aiCap.push(c, linkBoard); // Ăn ngay nếu lá rút liên kết được bài trên bàn
+            if (linkCap) { game.aiCap.push(c); } 
+            else if (linkBoard) {
+                game.aiCap.push(c, linkBoard);
                 game.board = game.board.filter(x => x.id !== linkBoard.id);
             } else {
-                // AI Chiến thuật: Nếu bài trên tay quá nhiều, AI sẽ bỏ lá bài ra bàn để tạo cơ hội sau
                 if (game.aiHand.length > 8) game.board.push(c);
                 else game.aiHand.push(c);
             }
             acted = true;
         }
-
         nextTurn(); 
     }
     
