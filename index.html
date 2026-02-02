@@ -64,7 +64,7 @@
 <div id="admin-panel">
     <div style="display:flex; justify-content: space-between; margin-bottom:10px;"><h2 style="color:var(--accent); margin:0;">ADMIN - QUẢN LÝ DỮ LIỆU</h2><button class="btn" style="background:#2ecc71; width:auto;" onclick="startGame()">VÀO CHƠI LUÔN</button></div>
     <div class="admin-grid">
-        <div class="box"><strong>1. Link ảnh:</strong><div style="margin-bottom:10px;">Mặt sau: <input type="text" id="back-card-url" oninput="cardBack=this.value;saveData()" style="width:70%; background:#111; color:#fff;"></div><div id="at-album" class="scroll-v" style="height:250px;"></div></div>
+        <div class="box"><strong>1. Link ảnh:</strong><div style="margin-bottom:10px;">Mặt sau: <input type="text" id="back-card-url" oninput="card_back=this.value;saveData()" style="width:70%; background:#111; color:#fff;"></div><div id="at-album" class="scroll-v" style="height:250px;"></div></div>
         <div class="box"><strong>2. Tạo Team:</strong><input type="text" id="t-name" placeholder="Tên Team..." style="width:90%; margin:5px 0;"><div id="at-checklist" class="scroll-v" style="height:220px;"></div><button class="btn" style="background:#3498db;" onclick="addTeam()">+ LƯU NHÓM</button></div>
         <div class="box"><strong>3. Đã lưu:</strong><div id="team-list" class="scroll-v"></div></div>
     </div>
@@ -121,7 +121,7 @@
 
 <script>
     const AT_NAMES = ["Hồng Sơn","Bằng Kiều","Tự Long","Phan Đinh Tùng","Tuấn Hưng","Đinh Tiến Đạt","Phạm Khánh Hưng","Tiến Luật","Thành Trung","Đăng Khôi","Trương Thế Vinh","Hà Lê","Đỗ Hoàng Hiệp","Thanh Duy","Quốc Thiên","Binz","Cường Seven","Nguyễn Trần Duy Nhất","Jun Phạm","Neko Lê","Tăng Phúc","Thiên Minh","BB Trần","Liên Bỉnh Phát","S.T Sơn Thạch","Rhymastic","Kiên Ứng","(S)TRONG Trọng Hiếu","Soobin Hoàng Sơn","Kay Trần","Bùi Công Nam","Duy Khánh","HuyR","Anh Tuấn","SLIMV","Đinh Hà Uyên Thư","Vĩ Khang","Long Kenji","Khánh Vy","Nhà Đam Mê","Nhà KK","Nhà Sao Sáng","Nhà Tái Sinh","Nhà Ngũ Hành","Nhà Hát","Nhà Xuân Hạ Thu Đông","Nhà Xương Rồng","Gai Con","Concert","Hỏa Ca"];
-    let teams = [], at_images = {}, cardBack = "", isPaused = false;
+    let teams = [], at_images = {}, card_back = "", isPaused = false;
     let game = { pHand:[], aiHand:[], board:[], deck:[], pCap:[], aiCap:[], turn:'p', selected:null, time:15, iv:null };
     function drive(url) { if(!url || !url.includes('drive.google.com')) return url; let id = url.split('/d/')[1]?.split('/')[0] || url.split('id=')[1]?.split('&')[0]; return `https://lh3.googleusercontent.com/d/${id}`; }
 
@@ -132,7 +132,7 @@ window.onload = async () => {
             const data = await res.json();
             at_images = data.images || {};
             teams = data.teams || [];
-            card_back = data.cardBack || "";
+            card_back = data.card_back || "";
         }
     } catch (e) { console.log("Dùng dữ liệu từ GitHub thất bại."); }
 
@@ -145,7 +145,7 @@ window.onload = async () => {
     }
 };
     function renderAdmin() {
-        document.getElementById('back-card-url').value = cardBack;
+        document.getElementById('back-card-url').value = card_back;
         document.getElementById('at-album').innerHTML = AT_NAMES.map((n, i) => `<div style="font-size:10px;">${i+1}. ${n} <input type="text" value="${at_images[i+1] || ''}" oninput="at_images[${i+1}]=this.value;saveData()" style="width:60%; background:#111; color:#fff;"></div>`).join('');
         document.getElementById('at-checklist').innerHTML = AT_NAMES.map((n, i) => `<div><input type="checkbox" value="${i+1}" class="chk-at"> ${n}</div>`).join('');
         renderTeamList();
@@ -176,7 +176,7 @@ window.onload = async () => {
         `).join('');
     }
 
-    function saveData() { localStorage.setItem('at_v23_data', JSON.stringify({ images: at_images, teams: teams, cardBack: cardBack })); }
+    function saveData() { localStorage.setItem('at_v23_data', JSON.stringify({ images: at_images, teams: teams, card_back: card_back })); }
 
     function startGame() {
         document.getElementById('admin-panel').classList.add('hidden');
@@ -206,7 +206,7 @@ window.onload = async () => {
         tc.className = game.turn === 'p' ? "circle-ui p-active" : "circle-ui ai-active";
         const pile = document.getElementById('draw-pile');
         document.getElementById('draw-count').innerText = game.deck.length;
-        if(cardBack) pile.style.backgroundImage = `url('${drive(cardBack)}')`;
+        if(card_back) pile.style.backgroundImage = `url('${drive(card_back)}')`;
         // CHECK TEAM DONE
         const isTeamDone = (cId) => {
             const team = teams.find(t => t.members.includes(cId));
@@ -217,7 +217,7 @@ window.onload = async () => {
 
         // BÀI TRÊN TAY & BÀI TRẢI: KHÔNG THÊM CLASS team-done
         const cardH = (c, isP) => `<div class="card ${game.selected === c.id ? 'selected' : ''}" onclick="${isP ? `selectCard(${c.id})` : ''}"><img class="c-img-front" src="${c.img}"><div class="c-name">${c.name}</div></div>`;
-        const aiH = cardBack ? `<div class="card"><img src="${drive(cardBack)}"></div>` : `<div class="card" style="background:#222;"></div>`;
+        const aiH = card_back ? `<div class="card"><img src="${drive(card_back)}"></div>` : `<div class="card" style="background:#222;"></div>`;
         
         document.getElementById('p-hand').innerHTML = game.pHand.map(c => cardH(c, true)).join('');
         document.getElementById('ai-hand').innerHTML = game.aiHand.map(() => aiH).join('');
@@ -281,4 +281,5 @@ window.onload = async () => {
     function closeReset() { document.getElementById('reset-modal').classList.add('hidden'); }
 </script>
 </body>
+
 </html>
