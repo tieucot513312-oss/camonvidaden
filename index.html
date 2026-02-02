@@ -123,24 +123,34 @@
     }
 
     window.onload = async () => {
-        const localData = localStorage.getItem('at_v23_data');
-        if(localData) {
-            const d = JSON.parse(localData);
-            at_images = d.images || {};
-            teams = d.teams || [];
-            cardBack = d.cardBack || "";
+    const localData = localStorage.getItem('at_v23_data');
+    if(localData) {
+        const d = JSON.parse(localData);
+        at_images = d.images || {};
+        teams = d.teams || [];
+        cardBack = d.cardBack || "";
+    }
+    try {
+        const res = await fetch('./data.json?t=' + Date.now());
+        if (res.ok) {
+            const data = await res.json();
+            if(!cardBack) cardBack = data.cardBack || "";
+            if(teams.length === 0) teams = data.teams || [];
+            if(Object.keys(at_images).length === 0) at_images = data.images || {};
         }
-        try {
-            const res = await fetch('./data.json?t=' + Date.now());
-            if (res.ok) {
-                const data = await res.json();
-                if(!cardBack) cardBack = data.cardBack || "";
-                if(teams.length === 0) teams = data.teams || [];
-                if(Object.keys(at_images).length === 0) at_images = data.images || {};
-            }
-        } catch (e) { console.log("Dùng dữ liệu Local."); }
+    } catch (e) { console.log("Dùng dữ liệu Local."); }
+
+    // --- ĐOẠN CODE THÊM MỚI TẠI ĐÂY ---
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('play') === 'true') {
+        // Nếu có ?play=true, khởi chạy game luôn
+        startGame(); 
+    } else {
+        // Nếu không, mới hiện bảng Admin
         renderAdmin();
-    };
+    }
+    // ----------------------------------
+};
 
     function renderAdmin() {
         document.getElementById('back-card-url').value = cardBack;
@@ -338,3 +348,4 @@
 </script>
 </body>
 </html>
+
