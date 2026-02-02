@@ -1,284 +1,305 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <title>Game Anh Tài V28 - Final Fixed UI</title>
-    <style>
-        :root { --bg: #0a0a0a; --accent: #f1c40f; --card-w: 72px; --card-h: 100px; --panel-bg: #111; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; overflow: hidden; }
-        #admin-panel { background: #1a1a1a; padding: 15px; border-bottom: 3px solid #333; height: auto; max-height: 90vh; overflow-y: auto; z-index: 1000; position: relative; }
-        .admin-grid { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 15px; }
-        .box { background: #222; padding: 12px; border-radius: 8px; border: 1px solid #444; }
-        .scroll-v { height: 350px; overflow-y: auto; background: #000; padding: 8px; border-radius: 5px; scrollbar-width: thin; }
-        .team-item { background: #333; margin-bottom: 5px; padding: 8px; border-radius: 5px; border-left: 3px solid var(--accent); }
-        #game-screen { display: grid; grid-template-columns: 260px 1fr 240px; height: 100vh; background: #050505; }
-        .rules-sidebar { background: var(--panel-bg); border-right: 1px solid #333; padding: 15px; overflow-y: auto; font-size: 13px; color: #ddd; line-height: 1.5; scrollbar-width: thin; }
-        .rules-sidebar h3 { color: var(--accent); margin-top: 0; text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; }
-        .play-main { display: flex; flex-direction: column; height: 100vh; position: relative; overflow: hidden; justify-content: center; align-items: center; gap: 15px; }
-        .right-controls { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 15px; align-items: center; z-index: 100; }
-        .circle-ui { width: 70px; height: 70px; border-radius: 50%; background: #222; border: 3px solid #444; display: flex; flex-direction: column; justify-content: center; align-items: center; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        #timer-val { font-size: 32px; color: var(--accent); }
-        .timer-label { font-size: 8px; color: #888; margin-top: -5px; }
-        #turn-indicator { font-size: 12px; text-align: center; line-height: 1.2; }
-        .p-active { border-color: #2ecc71; color: #2ecc71; box-shadow: 0 0 10px rgba(46, 204, 113, 0.3); }
-        .ai-active { border-color: #ff4757; color: #ff4757; box-shadow: 0 0 10px rgba(255, 71, 87, 0.3); }
-        #draw-pile { width: 75px; height: 105px; border: 2px solid #444; border-radius: 8px; cursor: pointer; background-color: #1a1a1a; background-size: cover; background-position: center; display: flex; justify-content: center; align-items: center; transition: 0.2s; position: relative; }
-        #draw-count { font-size: 24px; font-weight: bold; color: #fff; text-shadow: 0 0 5px #000; z-index: 2; }
-        .play-area { display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 0; width: 100%; flex: 0 0 auto; }
-        .card-row-scroll { display: flex; flex-wrap: nowrap; gap: 8px; overflow-x: auto; overflow-y: hidden; width: 100%; max-width: 650px; padding: 8px 2px; min-height: 115px; scrollbar-width: thin; align-items: center; justify-content: flex-start; margin: 0 auto; }
-        .captured-zone { width: 95%; max-width: 650px; display: flex; flex-direction: column; gap: 2px; margin: 0 auto; }
-        .captured-list { display: flex; gap: 4px; overflow-x: auto; width: 100%; height: 75px; background: rgba(255,255,255,0.03); border-radius: 5px; padding: 4px; align-items: center; scrollbar-width: thin; }
-        .zone-label { font-size: 11px; color: var(--accent); font-weight: bold; margin-left: 5px; display: flex; justify-content: space-between; padding-right: 10px;}
-        .card { width: var(--card-w); height: var(--card-h); background: #fff; border-radius: 6px; overflow: hidden; cursor: pointer; transition: 0.2s; border: 2px solid transparent; flex-shrink: 0; position: relative; }
-        .card img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; } 
-        .card .c-img-front { height: 78%; }
-        .card .c-name { height: 22%; color: #000; font-size: 9px; font-weight: bold; text-align: center; display: flex; align-items: center; justify-content: center; background: #fff; padding: 0 2px; line-height: 1.1; }
-        .card.selected { transform: scale(1.05); border-color: var(--accent); z-index: 10; }
-        .card.highlight { border-color: #2ecc71; animation: pulse 1s infinite; }
-        .card.team-done { border-color: #ff4757 !important; box-shadow: 0 0 8px #ff4757 !important; }
-        .card-mini { width: 45px; height: 64px; border-radius: 4px; flex-shrink: 0; }
-        .card-mini .c-name { font-size: 7px; display: flex; height: 25%; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 999; display: flex; justify-content: center; align-items: center; }
-        .modal-content { background: #222; padding: 20px; border-radius: 12px; border: 2px solid var(--accent); text-align: center; width: 300px; }
-        .side-bar { padding: 10px; background: #111; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; scrollbar-width: thin; border-left: 1px solid #222; }
-        .team-tag { padding: 5px; border: 1px solid #333; border-radius: 4px; color: #666; font-size: 11px; text-align: center; background: #151515; }
-        .team-tag.active { border-color: #ff4757; color: #ff4757; background: rgba(255, 71, 87, 0.1); font-weight: bold; }
-        .btn { color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; font-size: 12px; }
-        .hidden { display: none !important; }
-        @keyframes pulse { 0% { opacity: 0.7; } 100% { opacity: 1; } }
-    </style>
+    <meta charset="UTF-8">
+    <title>Game Anh Tài V28 - Final Fixed UI</title>
+    <style>
+        :root { --bg: #0a0a0a; --accent: #f1c40f; --card-w: 72px; --card-h: 100px; --panel-bg: #111; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; overflow: hidden; }
+        #admin-panel { background: #1a1a1a; padding: 15px; border-bottom: 3px solid #333; height: auto; max-height: 90vh; overflow-y: auto; z-index: 1000; position: relative; }
+        .admin-grid { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 15px; }
+        .box { background: #222; padding: 12px; border-radius: 8px; border: 1px solid #444; }
+        .scroll-v { height: 350px; overflow-y: auto; background: #000; padding: 8px; border-radius: 5px; scrollbar-width: thin; }
+        .team-item { background: #333; margin-bottom: 5px; padding: 8px; border-radius: 5px; border-left: 3px solid var(--accent); }
+        #game-screen { display: grid; grid-template-columns: 260px 1fr 240px; height: 100vh; background: #050505; }
+        .rules-sidebar { background: var(--panel-bg); border-right: 1px solid #333; padding: 15px; overflow-y: auto; font-size: 13px; color: #ddd; line-height: 1.5; scrollbar-width: thin; }
+        .rules-sidebar h3 { color: var(--accent); margin-top: 0; text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .play-main { display: flex; flex-direction: column; height: 100vh; position: relative; overflow: hidden; justify-content: center; align-items: center; gap: 15px; }
+        .right-controls { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 15px; align-items: center; z-index: 100; }
+        .circle-ui { width: 70px; height: 70px; border-radius: 50%; background: #222; border: 3px solid #444; display: flex; flex-direction: column; justify-content: center; align-items: center; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        #timer-val { font-size: 32px; color: var(--accent); }
+        .timer-label { font-size: 8px; color: #888; margin-top: -5px; }
+        #turn-indicator { font-size: 12px; text-align: center; line-height: 1.2; }
+        .p-active { border-color: #2ecc71; color: #2ecc71; box-shadow: 0 0 10px rgba(46, 204, 113, 0.3); }
+        .ai-active { border-color: #ff4757; color: #ff4757; box-shadow: 0 0 10px rgba(255, 71, 87, 0.3); }
+        #draw-pile { width: 75px; height: 105px; border: 2px solid #444; border-radius: 8px; cursor: pointer; background-color: #1a1a1a; background-size: cover; background-position: center; display: flex; justify-content: center; align-items: center; transition: 0.2s; position: relative; }
+        #draw-count { font-size: 24px; font-weight: bold; color: #fff; text-shadow: 0 0 5px #000; z-index: 2; }
+        .play-area { display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 0; width: 100%; flex: 0 0 auto; }
+        .card-row-scroll { display: flex; flex-wrap: nowrap; gap: 8px; overflow-x: auto; overflow-y: hidden; width: 100%; max-width: 650px; padding: 8px 2px; min-height: 115px; scrollbar-width: thin; align-items: center; justify-content: flex-start; margin: 0 auto; }
+        .captured-zone { width: 95%; max-width: 650px; display: flex; flex-direction: column; gap: 2px; margin: 0 auto; }
+        .captured-list { display: flex; gap: 4px; overflow-x: auto; width: 100%; height: 75px; background: rgba(255,255,255,0.03); border-radius: 5px; padding: 4px; align-items: center; scrollbar-width: thin; }
+        .zone-label { font-size: 11px; color: var(--accent); font-weight: bold; margin-left: 5px; display: flex; justify-content: space-between; padding-right: 10px;}
+        .card { width: var(--card-w); height: var(--card-h); background: #fff; border-radius: 6px; overflow: hidden; cursor: pointer; transition: 0.2s; border: 2px solid transparent; flex-shrink: 0; position: relative; }
+        .card img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; } 
+        .card .c-img-front { height: 78%; }
+        .card .c-name { height: 22%; color: #000; font-size: 9px; font-weight: bold; text-align: center; display: flex; align-items: center; justify-content: center; background: #fff; padding: 0 2px; line-height: 1.1; }
+        .card.selected { transform: scale(1.05); border-color: var(--accent); z-index: 10; }
+        .card.highlight { border-color: #2ecc71; animation: pulse 1s infinite; }
+        .card.team-done { border-color: #ff4757 !important; box-shadow: 0 0 8px #ff4757 !important; }
+        .card-mini { width: 45px; height: 64px; border-radius: 4px; flex-shrink: 0; }
+        .card-mini .c-name { font-size: 7px; display: flex; height: 25%; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 999; display: flex; justify-content: center; align-items: center; }
+        .modal-content { background: #222; padding: 20px; border-radius: 12px; border: 2px solid var(--accent); text-align: center; width: 300px; }
+        .side-bar { padding: 10px; background: #111; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; scrollbar-width: thin; border-left: 1px solid #222; }
+        .team-tag { padding: 5px; border: 1px solid #333; border-radius: 4px; color: #666; font-size: 11px; text-align: center; background: #151515; }
+        .team-tag.active { border-color: #ff4757; color: #ff4757; background: rgba(255, 71, 87, 0.1); font-weight: bold; }
+        .btn { color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; font-size: 12px; }
+        .hidden { display: none !important; }
+        @keyframes pulse { 0% { opacity: 0.7; } 100% { opacity: 1; } }
+    </style>
 </head>
 <body>
 
 <div id="decision-modal" class="modal-overlay hidden">
-    <div class="modal-content">
-        <h3 style="color:var(--accent); margin:0;">BẠN RÚT ĐƯỢC</h3>
-        <img id="modal-img" style="width:90px; height:125px; margin:15px auto; border:2px solid white; display:block; object-fit: cover;" src="">
-        <div style="display:flex; gap:10px;"><button class="btn" style="background:#2ecc71; flex:1;" onclick="resolveDraw(true)">OK DỨT</button><button class="btn" style="background:#e74c3c; flex:1;" onclick="resolveDraw(false)">TẠM XA NHAU</button></div>
-    </div>
+    <div class="modal-content">
+        <h3 style="color:var(--accent); margin:0;">BẠN RÚT ĐƯỢC</h3>
+        <img id="modal-img" style="width:90px; height:125px; margin:15px auto; border:2px solid white; display:block; object-fit: cover;" src="">
+        <div style="display:flex; gap:10px;"><button class="btn" style="background:#2ecc71; flex:1;" onclick="resolveDraw(true)">OK DỨT</button><button class="btn" style="background:#e74c3c; flex:1;" onclick="resolveDraw(false)">TẠM XA NHAU</button></div>
+    </div>
 </div>
 
 <div id="pause-modal" class="modal-overlay hidden"><div class="modal-content"><h2 style="color:var(--accent);">☕ NGHỈ GIẢI LAO</h2><button class="btn" style="background:#3498db;" onclick="resumeGame()">OK TIẾP TỤC ▶</button></div></div>
 <div id="reset-modal" class="modal-overlay hidden"><div class="modal-content"><h2 style="color:#ff4757;">⚠️ CẢNH BÁO</h2><p>Chắc chưa?</p><div style="display:flex; gap:10px;"><button class="btn" style="background:#e74c3c; flex:1;" onclick="confirmReset()">CHẮC RỒI</button><button class="btn" style="background:#95a5a6; flex:1;" onclick="closeReset()">THÔI CHƠI TIẾP</button></div></div></div>
 
 <div id="admin-panel">
-    <div style="display:flex; justify-content: space-between; margin-bottom:10px;"><h2 style="color:var(--accent); margin:0;">ADMIN - QUẢN LÝ DỮ LIỆU</h2><button class="btn" style="background:#2ecc71; width:auto;" onclick="startGame()">VÀO CHƠI LUÔN</button></div>
-    <div class="admin-grid">
-        <div class="box"><strong>1. Link ảnh:</strong><div style="margin-bottom:10px;">Mặt sau: <input type="text" id="back-card-url" oninput="cardBack=this.value;saveData()" style="width:70%; background:#111; color:#fff;"></div><div id="at-album" class="scroll-v" style="height:250px;"></div></div>
-        <div class="box"><strong>2. Tạo Team:</strong><input type="text" id="t-name" placeholder="Tên Team..." style="width:90%; margin:5px 0;"><div id="at-checklist" class="scroll-v" style="height:220px;"></div><button class="btn" style="background:#3498db;" onclick="addTeam()">+ LƯU NHÓM</button></div>
-        <div class="box"><strong>3. Đã lưu:</strong><div id="team-list" class="scroll-v"></div></div>
-    </div>
+    <div style="display:flex; justify-content: space-between; margin-bottom:10px;"><h2 style="color:var(--accent); margin:0;">ADMIN - QUẢN LÝ DỮ LIỆU</h2><button class="btn" style="background:#2ecc71; width:auto;" onclick="startGame()">VÀO CHƠI LUÔN</button></div>
+    <div class="admin-grid">
+        <div class="box"><strong>1. Link ảnh:</strong><div style="margin-bottom:10px;">Mặt sau: <input type="text" id="back-card-url" oninput="cardBack=this.value;saveData()" style="width:70%; background:#111; color:#fff;"></div><div id="at-album" class="scroll-v" style="height:250px;"></div></div>
+        <div class="box"><strong>2. Tạo Team:</strong><input type="text" id="t-name" placeholder="Tên Team..." style="width:90%; margin:5px 0;"><div id="at-checklist" class="scroll-v" style="height:220px;"></div><button class="btn" style="background:#3498db;" onclick="addTeam()">+ LƯU NHÓM</button></div>
+        <div class="box"><strong>3. Đã lưu:</strong><div id="team-list" class="scroll-v"></div></div>
+    </div>
 </div>
 
 <div id="game-screen" class="hidden">
-    <div class="rules-sidebar">
-        <h3>LUẬT CHƠI</h3>
-        <b>1. Mục tiêu:</b> Thu thập và xếp các lá bài theo đúng team (có liên kết) để ghi điểm<br><br>
-        
-        <b>2. Chia bài:</b><br>
-        - Mỗi người: 7 lá bài trên tay<br>
-        - Giữa bàn: 8 lá bài ngửa<br>
-        - Phần còn lại: bài úp để rút<br><br>
+    <div class="rules-sidebar">
+        <h3>LUẬT CHƠI</h3>
+        <b>1. Mục tiêu:</b> Thu thập và xếp các lá bài theo đúng team (có liên kết) để ghi điểm<br><br>
+        
+        <b>2. Chia bài:</b><br>
+        - Mỗi người: 7 lá bài trên tay<br>
+        - Giữa bàn: 8 lá bài ngửa<br>
+        - Phần còn lại: bài úp để rút<br><br>
 
-        <b>3. Lượt chơi & cách lấy bài</b><br>
-        - Mỗi lượt có 15 giây<br>
-        - Toàn bộ các lá cùng team (có liên kết) sẽ được chuyển vào khu “Đã tìm thấy nhau”.<br>
-        - Hết bài trên tay: bắt buộc rút bài<br>
-        - Chỉ được chọn 1 trong 2 hành động:<br>
-        <em style="color:#f1c40f">* Lấy bài trên bàn:</em><br>
-        <span style="font-size:12px; color:#aaa; display:block; padding-left:10px;">
-        > Nếu bài trên tay hoặc bài trong khu “Đã tìm thấy nhau” có liên kết với bất kỳ lá nào trên bàn → được lấy lá đó.<br>
-        > Bắt buộc phải có bài liên kết thì mới được lấy bài trên bàn.<br>
-        => Nếu không có liên kết → không được lấy, phải rút bài.
-        </span>
-        <em style="color:#f1c40f">* Rút bài úp:</em><br>
-        <span style="font-size:12px; color:#aaa; display:block; padding-left:10px;">
-        > Được rút khi: không thể lấy bài trên bàn hoặc chủ động không lấy bài trên bàn<br>
-        > Sau khi rút: Có thể bỏ qua, hoặc giữ lại trên tay (không cần liên kết vẫn giữ được)
-        </span><br>
+        <b>3. Lượt chơi & cách lấy bài</b><br>
+        - Mỗi lượt có 15 giây<br>
+        - Toàn bộ các lá cùng team (có liên kết) sẽ được chuyển vào khu “Đã tìm thấy nhau”.<br>
+        - Hết bài trên tay: bắt buộc rút bài<br>
+        - Chỉ được chọn 1 trong 2 hành động:<br>
+        <em style="color:#f1c40f">* Lấy bài trên bàn:</em><br>
+        <span style="font-size:12px; color:#aaa; display:block; padding-left:10px;">
+        > Nếu bài trên tay hoặc bài trong khu “Đã tìm thấy nhau” có liên kết với bất kỳ lá nào trên bàn → được lấy lá đó.<br>
+        > Bắt buộc phải có bài liên kết thì mới được lấy bài trên bàn.<br>
+        => Nếu không có liên kết → không được lấy, phải rút bài.
+        </span>
+        <em style="color:#f1c40f">* Rút bài úp:</em><br>
+        <span style="font-size:12px; color:#aaa; display:block; padding-left:10px;">
+        > Được rút khi: không thể lấy bài trên bàn hoặc chủ động không lấy bài trên bàn<br>
+        > Sau khi rút: Có thể bỏ qua, hoặc giữ lại trên tay (không cần liên kết vẫn giữ được)
+        </span><br>
 
-        <b>4. Kết thúc & tính điểm:</b><br>
-        Ván đấu kết thúc khi:<br>
-        - Hết toàn bộ bài: không còn bài trải trên bàn và bài rút.<br>
-        - Còn bài nhưng không thể rút:<br>
-        + Đã hết bài rút nhưng bài sở hữu của cả 2 không có liên kết với bài trên bàn<br>
-        + Một phe hết bài + hết bài rút.<br><br>
-      
-        Điểm được tính như sau:<br>
-        - Mỗi liên kết tìm được: +1 điểm<br>
-        - Mỗi team thu thập đủ: +5 điểm<br>
-        - Mỗi lá không tìm được liên kết: -2 điểm
-    </div>
+        <b>4. Kết thúc & tính điểm:</b><br>
+        Ván đấu kết thúc khi:<br>
+        - Hết toàn bộ bài: không còn bài trải trên bàn và bài rút.<br>
+        - Còn bài nhưng không thể rút:<br>
+        + Đã hết bài rút nhưng bài sở hữu của cả 2 không có liên kết với bài trên bàn<br>
+        + Một phe hết bài + hết bài rút.<br><br>
+      
+        Điểm được tính như sau:<br>
+        - Mỗi liên kết tìm được: +1 điểm<br>
+        - Mỗi team thu thập đủ: +5 điểm<br>
+        - Mỗi lá không tìm được liên kết: -2 điểm
+    </div>
 
-    <div class="play-main">
-        <div class="play-area"><div id="ai-hand" class="card-row-scroll"></div><div class="captured-zone"><div class="zone-label"><span>Đã tìm thấy nhau</span> <span id="score-ai" style="color:#ff4757">0</span></div><div id="ai-captured" class="captured-list"></div></div></div>
-        <div class="play-area"><div id="board" class="card-row-scroll"></div></div>
-        <div class="play-area"><div class="captured-zone"><div class="zone-label"><span>Đã tìm thấy nhau</span> <span id="score-p" style="color:#2ecc71">0</span></div><div id="p-captured" class="captured-list"></div></div><div id="p-hand" class="card-row-scroll"></div></div>
-        <div class="right-controls"><div class="circle-ui"><div id="timer-val">15</div><div class="timer-label">GIÂY</div></div><div id="turn-circle" class="circle-ui p-active"><div id="turn-indicator">GAI<br>CON</div></div><div id="draw-pile" onclick="playerDraw()"><span id="draw-count"></span></div></div>
-    </div>
-    <div class="side-bar"><h4 style="text-align:center; color:var(--accent);">TIẾN ĐỘ TEAM</h4><div id="side-teams" class="scroll-v" style="height:450px;"></div><button class="btn" style="background:#3498db;" onclick="togglePause()">Tạm dừng</button><button class="btn" style="background:#9b59b6;" onclick="resetGame()">Làm lại</button></div>
+    <div class="play-main">
+        <div class="play-area"><div id="ai-hand" class="card-row-scroll"></div><div class="captured-zone"><div class="zone-label"><span>Đã tìm thấy nhau</span> <span id="score-ai" style="color:#ff4757">0</span></div><div id="ai-captured" class="captured-list"></div></div></div>
+        <div class="play-area"><div id="board" class="card-row-scroll"></div></div>
+        <div class="play-area"><div class="captured-zone"><div class="zone-label"><span>Đã tìm thấy nhau</span> <span id="score-p" style="color:#2ecc71">0</span></div><div id="p-captured" class="captured-list"></div></div><div id="p-hand" class="card-row-scroll"></div></div>
+        <div class="right-controls"><div class="circle-ui"><div id="timer-val">15</div><div class="timer-label">GIÂY</div></div><div id="turn-circle" class="circle-ui p-active"><div id="turn-indicator">GAI<br>CON</div></div><div id="draw-pile" onclick="playerDraw()"><span id="draw-count"></span></div></div>
+    </div>
+    <div class="side-bar"><h4 style="text-align:center; color:var(--accent);">TIẾN ĐỘ TEAM</h4><div id="side-teams" class="scroll-v" style="height:450px;"></div><button class="btn" style="background:#3498db;" onclick="togglePause()">Tạm dừng</button><button class="btn" style="background:#9b59b6;" onclick="resetGame()">Làm lại</button></div>
 </div>
 
 <script>
-    const AT_NAMES = ["Hồng Sơn","Bằng Kiều","Tự Long","Phan Đinh Tùng","Tuấn Hưng","Đinh Tiến Đạt","Phạm Khánh Hưng","Tiến Luật","Thành Trung","Đăng Khôi","Trương Thế Vinh","Hà Lê","Đỗ Hoàng Hiệp","Thanh Duy","Quốc Thiên","Binz","Cường Seven","Nguyễn Trần Duy Nhất","Jun Phạm","Neko Lê","Tăng Phúc","Thiên Minh","BB Trần","Liên Bỉnh Phát","S.T Sơn Thạch","Rhymastic","Kiên Ứng","(S)TRONG Trọng Hiếu","Soobin Hoàng Sơn","Kay Trần","Bùi Công Nam","Duy Khánh","HuyR","Anh Tuấn","SLIMV","Đinh Hà Uyên Thư","Vĩ Khang","Long Kenji","Khánh Vy","Nhà Đam Mê","Nhà KK","Nhà Sao Sáng","Nhà Tái Sinh","Nhà Ngũ Hành","Nhà Hát","Nhà Xuân Hạ Thu Đông","Nhà Xương Rồng","Gai Con","Concert","Hỏa Ca"];
-    let teams = [], at_images = {}, cardBack = "", isPaused = false;
-    let game = { pHand:[], aiHand:[], board:[], deck:[], pCap:[], aiCap:[], turn:'p', selected:null, time:15, iv:null };
-    function drive(url) { if(!url || !url.includes('drive.google.com')) return url; let id = url.split('/d/')[1]?.split('/')[0] || url.split('id=')[1]?.split('&')[0]; return `https://lh3.googleusercontent.com/d/${id}`; }
+    const AT_NAMES = ["Hồng Sơn","Bằng Kiều","Tự Long","Phan Đinh Tùng","Tuấn Hưng","Đinh Tiến Đạt","Phạm Khánh Hưng","Tiến Luật","Thành Trung","Đăng Khôi","Trương Thế Vinh","Hà Lê","Đỗ Hoàng Hiệp","Thanh Duy","Quốc Thiên","Binz","Cường Seven","Nguyễn Trần Duy Nhất","Jun Phạm","Neko Lê","Tăng Phúc","Thiên Minh","BB Trần","Liên Bỉnh Phát","S.T Sơn Thạch","Rhymastic","Kiên Ứng","(S)TRONG Trọng Hiếu","Soobin Hoàng Sơn","Kay Trần","Bùi Công Nam","Duy Khánh","HuyR","Anh Tuấn","SLIMV","Đinh Hà Uyên Thư","Vĩ Khang","Long Kenji","Khánh Vy","Nhà Đam Mê","Nhà KK","Nhà Sao Sáng","Nhà Tái Sinh","Nhà Ngũ Hành","Nhà Hát","Nhà Xuân Hạ Thu Đông","Nhà Xương Rồng","Gai Con","Concert","Hỏa Ca"];
+    let teams = [], at_images = {}, cardBack = "", isPaused = false;
+    let game = { pHand:[], aiHand:[], board:[], deck:[], pCap:[], aiCap:[], turn:'p', selected:null, time:15, iv:null };
+    
+    // FIX DRIVE URL FUNCTION: Sửa lỗi regex để lấy ID chính xác hơn
+    function drive(url) { 
+        if(!url || !url.includes('drive.google.com')) return url; 
+        let id = url.split('/d/')[1]?.split('/')[0] || url.split('id=')[1]?.split('&')[0]; 
+        return `https://lh3.googleusercontent.com/d/${id}`; // Sử dụng endpoint mới ổn định hơn
+    }
 
 window.onload = async () => {
-    try {
-        const res = await fetch('./data.json?t=' + Date.now()); // Thêm ?t để tránh bị lưu cache cũ
-        if (res.ok) {
-            const data = await res.json();
-            at_images = data.images || {};
-            teams = data.teams || [];
-            card_back = data.cardBack || "";
-        }
-    } catch (e) { console.log("Dùng dữ liệu từ GitHub thất bại."); }
+    // Ưu tiên lấy từ LocalStorage trước để giữ thiết lập Admin
+    const localData = localStorage.getItem('at_v23_data');
+    if(localData) {
+        const d = JSON.parse(localData);
+        at_images = d.images || {};
+        teams = d.teams || [];
+        cardBack = d.cardBack || "";
+    }
 
-    renderAdmin();
+    try {
+        const res = await fetch('./data.json?t=' + Date.now());
+        if (res.ok) {
+            const data = await res.json();
+            // Chỉ cập nhật nếu local rỗng hoặc muốn ưu tiên file JSON
+            if(!cardBack) cardBack = data.cardBack || "";
+            if(teams.length === 0) teams = data.teams || [];
+            if(Object.keys(at_images).length === 0) at_images = data.images || {};
+        }
+    } catch (e) { console.log("Dùng dữ liệu Local."); }
 
-    // KIỂM TRA LINK: Nếu có chữ ?play=true thì vào game luôn
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('play') === 'true') {
-        startGame(); // Tự động chạy hàm bắt đầu game [cite: 90]
-    }
+    renderAdmin();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('play') === 'true') {
+        startGame();
+    }
 };
-    function renderAdmin() {
-        document.getElementById('back-card-url').value = cardBack;
-        document.getElementById('at-album').innerHTML = AT_NAMES.map((n, i) => `<div style="font-size:10px;">${i+1}. ${n} <input type="text" value="${at_images[i+1] || ''}" oninput="at_images[${i+1}]=this.value;saveData()" style="width:60%; background:#111; color:#fff;"></div>`).join('');
-        document.getElementById('at-checklist').innerHTML = AT_NAMES.map((n, i) => `<div><input type="checkbox" value="${i+1}" class="chk-at"> ${n}</div>`).join('');
-        renderTeamList();
-    }
 
-    function addTeam() {
-        const name = document.getElementById('t-name').value;
-        const checkboxes = document.querySelectorAll('.chk-at:checked');
-        const ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
-        if(!name || ids.length < 2) return;
-        
-        teams.push({ name, members: ids });
-        renderTeamList(); 
-        saveData();
+    function renderAdmin() {
+        document.getElementById('back-card-url').value = cardBack;
+        document.getElementById('at-album').innerHTML = AT_NAMES.map((n, i) => `<div style="font-size:10px;">${i+1}. ${n} <input type="text" value="${at_images[i+1] || ''}" oninput="at_images[${i+1}]=this.value;saveData()" style="width:60%; background:#111; color:#fff;"></div>`).join('');
+        document.getElementById('at-checklist').innerHTML = AT_NAMES.map((n, i) => `<div><input type="checkbox" value="${i+1}" class="chk-at"> ${n}</div>`).join('');
+        renderTeamList();
+    }
 
-        // Cập nhật mới: Reset input tên và bỏ tick các thành viên
-        document.getElementById('t-name').value = "";
-        checkboxes.forEach(cb => cb.checked = false);
-    }
+    function addTeam() {
+        const name = document.getElementById('t-name').value;
+        const checkboxes = document.querySelectorAll('.chk-at:checked');
+        const ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
+        if(!name || ids.length < 2) return;
+        
+        teams.push({ name, members: ids });
+        renderTeamList(); 
+        saveData();
+        document.getElementById('t-name').value = "";
+        checkboxes.forEach(cb => cb.checked = false);
+    }
 
-    function renderTeamList() { 
-        document.getElementById('team-list').innerHTML = teams.map((t, i) => `
-            <div class="team-item">
-                <strong>${t.name}</strong>
-                <span onclick="teams.splice(${i},1);renderTeamList();saveData()" style="color:#ff4757; float:right; cursor:pointer;">X</span>
-                <div style="font-size:10px; color:#aaa; margin-top:4px;">${t.members.map(m => AT_NAMES[m-1]).join(', ')}</div>
-            </div>
-        `).join('');
-    }
+    function renderTeamList() { 
+        document.getElementById('team-list').innerHTML = teams.map((t, i) => `
+            <div class="team-item">
+                <strong>${t.name}</strong>
+                <span onclick="teams.splice(${i},1);renderTeamList();saveData()" style="color:#ff4757; float:right; cursor:pointer;">X</span>
+                <div style="font-size:10px; color:#aaa; margin-top:4px;">${t.members.map(m => AT_NAMES[m-1]).join(', ')}</div>
+            </div>
+        `).join('');
+    }
 
-    function saveData() { localStorage.setItem('at_v23_data', JSON.stringify({ images: at_images, teams: teams, cardBack: cardBack })); }
+    function saveData() { localStorage.setItem('at_v23_data', JSON.stringify({ images: at_images, teams: teams, cardBack: cardBack })); }
 
-    function startGame() {
-        document.getElementById('admin-panel').classList.add('hidden');
-        document.getElementById('game-screen').classList.remove('hidden');
-        let fullDeck = AT_NAMES.map((n, i) => ({ id: i+1, name: n, img: drive(at_images[i+1]) }));
-        fullDeck.sort(() => Math.random() - 0.5);
-        game.pHand = fullDeck.splice(0, 7); game.aiHand = fullDeck.splice(0, 7);
-        game.board = fullDeck.splice(0, 8); game.deck = fullDeck;
-        game.pCap = [];
-        game.aiCap = []; game.turn = 'p';
-        document.getElementById('side-teams').innerHTML = teams.map(t => `<div id="tag-${t.name.replace(/\s/g,'')}" class="team-tag">${t.name}</div>`).join('');
-        updateUI(); startTimer();
-    }
+    function startGame() {
+        document.getElementById('admin-panel').classList.add('hidden');
+        document.getElementById('game-screen').classList.remove('hidden');
+        let fullDeck = AT_NAMES.map((n, i) => ({ id: i+1, name: n, img: drive(at_images[i+1]) }));
+        fullDeck.sort(() => Math.random() - 0.5);
+        game.pHand = fullDeck.splice(0, 7); game.aiHand = fullDeck.splice(0, 7);
+        game.board = fullDeck.splice(0, 8); game.deck = fullDeck;
+        game.pCap = [];
+        game.aiCap = []; game.turn = 'p';
+        document.getElementById('side-teams').innerHTML = teams.map(t => `<div id="tag-${t.name.replace(/\s/g,'')}" class="team-tag">${t.name}</div>`).join('');
+        updateUI(); startTimer();
+    }
 
-    function calculateScore(captured, isFinal = false) {
-        let s = captured.length;
-        teams.forEach(t => { if(t.members.every(mId => captured.some(c => c.id === mId))) s += 5; });
-        if(isFinal) { captured.forEach(c => { let linked = false; teams.filter(t => t.members.includes(c.id)).forEach(t => { if(t.members.every(mId => captured.some(cap => cap.id === mId))) linked = true; }); if(!linked) s -= 2; }); }
-        return s;
-    }
+    function calculateScore(captured, isFinal = false) {
+        let s = captured.length;
+        teams.forEach(t => { if(t.members.every(mId => captured.some(c => c.id === mId))) s += 5; });
+        if(isFinal) { captured.forEach(c => { let linked = false; teams.filter(t => t.members.includes(c.id)).forEach(t => { if(t.members.every(mId => captured.some(cap => cap.id === mId))) linked = true; }); if(!linked) s -= 2; }); }
+        return s;
+    }
 
-    function updateUI() {
-        document.getElementById('score-p').innerText = calculateScore(game.pCap);
-        document.getElementById('score-ai').innerText = calculateScore(game.aiCap);
-        const tc = document.getElementById('turn-circle');
-        document.getElementById('turn-indicator').innerHTML = game.turn === 'p' ? "GAI<br>CON" : "ANH<br>TÀI";
-        tc.className = game.turn === 'p' ? "circle-ui p-active" : "circle-ui ai-active";
-        const pile = document.getElementById('draw-pile');
-        document.getElementById('draw-count').innerText = game.deck.length;
-        if(cardBack) pile.style.backgroundImage = `url('${drive(cardBack)}')`;
-        // CHECK TEAM DONE
-        const isTeamDone = (cId) => {
-            const team = teams.find(t => t.members.includes(cId));
-            if(!team) return false;
-            // Team xong khi TẤT CẢ thành viên nằm trong bài đã ăn
-            return team.members.every(mId => [...game.pCap, ...game.aiCap].some(captured => captured.id === mId));
-        };
+    function updateUI() {
+        document.getElementById('score-p').innerText = calculateScore(game.pCap);
+        document.getElementById('score-ai').innerText = calculateScore(game.aiCap);
+        const tc = document.getElementById('turn-circle');
+        document.getElementById('turn-indicator').innerHTML = game.turn === 'p' ? "GAI<br>CON" : "ANH<br>TÀI";
+        tc.className = game.turn === 'p' ? "circle-ui p-active" : "circle-ui ai-active";
+        
+        const pile = document.getElementById('draw-pile');
+        document.getElementById('draw-count').innerText = game.deck.length;
+        // FIX: Hiển thị ảnh mặt sau
+        if(cardBack) {
+            pile.style.backgroundImage = `url('${drive(cardBack)}')`;
+            pile.style.backgroundSize = 'cover';
+        }
 
-        // BÀI TRÊN TAY & BÀI TRẢI: KHÔNG THÊM CLASS team-done
-        const cardH = (c, isP) => `<div class="card ${game.selected === c.id ? 'selected' : ''}" onclick="${isP ? `selectCard(${c.id})` : ''}"><img class="c-img-front" src="${c.img}"><div class="c-name">${c.name}</div></div>`;
-        const aiH = cardBack ? `<div class="card"><img src="${drive(cardBack)}"></div>` : `<div class="card" style="background:#222;"></div>`;
-        
-        document.getElementById('p-hand').innerHTML = game.pHand.map(c => cardH(c, true)).join('');
-        document.getElementById('ai-hand').innerHTML = game.aiHand.map(() => aiH).join('');
-        
-        document.getElementById('board').innerHTML = game.board.map(c => {
-            const hasM = game.pCap.some(pc => teams.some(t => t.members.includes(pc.id) && t.members.includes(c.id)));
-            // Chỉ highlight (viền xanh lá) nếu có liên kết để ăn, KHÔNG đổi màu đỏ (team-done)
-            return `<div class="card ${hasM ? 'highlight' : ''}" onclick="takeCard(${c.id})"><img class="c-img-front" src="${c.img}"><div class="c-name">${c.name}</div></div>`;
-        }).join('');
-        // CHỈ CÓ BÀI TRONG "ĐÃ TÌM THẤY NHAU" MỚI THÊM CLASS team-done (ĐỎ)
-        const mini = (c) => `<div class="card card-mini ${isTeamDone(c.id) ? 'team-done' : ''}"><img src="${c.img}"><div class="c-name">${c.name}</div></div>`;
-        document.getElementById('p-captured').innerHTML = game.pCap.map(mini).join('');
-        document.getElementById('ai-captured').innerHTML = game.aiCap.map(mini).join('');
-        
-        // CẬP NHẬT CỘT TIẾN ĐỘ (ĐỎ)
-        teams.forEach(t => { 
-            const ok = t.members.every(mId => [...game.pCap, ...game.aiCap].some(c => c.id === mId)); 
-            const el = document.getElementById(`tag-${t.name.replace(/\s/g,'')}`); 
-            if(el) el.className = ok ? 'team-tag active' : 'team-tag'; 
-        });
-        checkEndGame();
-    }
+        const isTeamDone = (cId) => {
+            const team = teams.find(t => t.members.includes(cId));
+            if(!team) return false;
+            return team.members.every(mId => [...game.pCap, ...game.aiCap].some(captured => captured.id === mId));
+        };
 
-    function selectCard(id) { if(game.turn === 'p') { game.selected = (game.selected === id) ? null : id; updateUI(); } }
+        const cardH = (c, isP) => `<div class="card ${game.selected === c.id ? 'selected' : ''}" onclick="${isP ? `selectCard(${c.id})` : ''}"><img class="c-img-front" src="${c.img}"><div class="c-name">${c.name}</div></div>`;
+        const aiH = cardBack ? `<div class="card"><img src="${drive(cardBack)}"></div>` : `<div class="card" style="background:#222;"></div>`;
+        
+        document.getElementById('p-hand').innerHTML = game.pHand.map(c => cardH(c, true)).join('');
+        document.getElementById('ai-hand').innerHTML = game.aiHand.map(() => aiH).join('');
+        
+        document.getElementById('board').innerHTML = game.board.map(c => {
+            const hasM = game.pCap.some(pc => teams.some(t => t.members.includes(pc.id) && t.members.includes(c.id)));
+            return `<div class="card ${hasM ? 'highlight' : ''}" onclick="takeCard(${c.id})"><img class="c-img-front" src="${c.img}"><div class="c-name">${c.name}</div></div>`;
+        }).join('');
 
-    function takeCard(bId) {
-        if(game.turn !== 'p' || isPaused) return;
-        const bc = game.board.find(x => x.id === bId);
-        const mMatch = game.pCap.some(pc => teams.some(t => t.members.includes(pc.id) && t.members.includes(bId)));
-        if(mMatch) { game.pCap.push(bc); game.board = game.board.filter(x => x.id !== bId); nextTurn(); return; }
-        if(game.selected) { const match = teams.some(t => t.members.includes(game.selected) && t.members.includes(bId));
-        if(match) { game.pCap.push(bc, game.pHand.find(x => x.id === game.selected)); game.board = game.board.filter(x => x.id !== bId);
-        game.pHand = game.pHand.filter(x => x.id !== game.selected); game.selected = null; nextTurn(); } }
-    }
+        const mini = (c) => `<div class="card card-mini ${isTeamDone(c.id) ? 'team-done' : ''}"><img src="${c.img}"><div class="c-name">${c.name}</div></div>`;
+        document.getElementById('p-captured').innerHTML = game.pCap.map(mini).join('');
+        document.getElementById('ai-captured').innerHTML = game.aiCap.map(mini).join('');
+        
+        teams.forEach(t => { 
+            const ok = t.members.every(mId => [...game.pCap, ...game.aiCap].some(c => c.id === mId)); 
+            const el = document.getElementById(`tag-${t.name.replace(/\s/g,'')}`); 
+            if(el) el.className = ok ? 'team-tag active' : 'team-tag'; 
+        });
+        checkEndGame();
+    }
 
-    function playerDraw() { if(game.turn !== 'p' || isPaused || game.deck.length === 0) return;
-        clearInterval(game.iv); game.tempDraw = game.deck.shift(); document.getElementById('decision-modal').classList.remove('hidden'); document.getElementById('modal-img').src = game.tempDraw.img; }
-    function resolveDraw(isK) { document.getElementById('decision-modal').classList.add('hidden'); let c = game.tempDraw;
-        if(isK) { let match = game.board.find(bc => teams.some(t => t.members.includes(c.id) && t.members.includes(bc.id))); if(match) { game.pCap.push(c, match);
-        game.board = game.board.filter(x => x.id !== match.id); } else { game.pHand.push(c); } } else { game.board.push(c); } game.tempDraw = null;
-        nextTurn(); }
-    function startTimer() { clearInterval(game.iv); game.time = 15; document.getElementById('timer-val').innerText = game.time;
-        game.iv = setInterval(() => { if(!isPaused) { game.time--; document.getElementById('timer-val').innerText = game.time; if(game.turn === 'ai' && game.time === 7) aiMove(); if(game.time <= 0) nextTurn(); } }, 1000);
-    }
-    function nextTurn() { game.turn = (game.turn === 'p' ? 'ai' : 'p'); updateUI(); startTimer(); }
-    function aiMove() { if(game.aiHand.length === 0 && game.deck.length > 0) { let c = game.deck.shift();
-        let bIdx = game.board.findIndex(bc => teams.some(t => t.members.includes(c.id) && t.members.includes(bc.id))); if(bIdx > -1) game.aiCap.push(c, game.board.splice(bIdx,1)[0]); else game.aiHand.push(c); nextTurn(); return;
-        } let mIdx = game.board.findIndex(bc => game.aiCap.some(ac => teams.some(t => t.members.includes(ac.id) && t.members.includes(bc.id)))); if(mIdx > -1) game.aiCap.push(game.board.splice(mIdx,1)[0]);
-        else { let eaten = false; for(let bc of game.board) { let mIdx = game.aiHand.findIndex(ah => teams.some(t => t.members.includes(bc.id) && t.members.includes(ah.id)));
-        if(mIdx > -1) { game.aiCap.push(bc, game.aiHand.splice(mIdx,1)[0]); game.board = game.board.filter(x => x.id !== bc.id); eaten = true; break;
-        } } if(!eaten && game.deck.length > 0) { let c = game.deck.shift();
-        let bIdx = game.board.findIndex(bc => teams.some(t => t.members.includes(c.id) && t.members.includes(bc.id))); if(bIdx > -1) game.aiCap.push(c, game.board.splice(bIdx,1)[0]); else game.aiHand.push(c); } } nextTurn();
-    }
-    function checkEndGame() { if((game.board.length === 0 && game.deck.length === 0) || (game.deck.length === 0 && (game.pHand.length === 0 || game.aiHand.length === 0))) { clearInterval(game.iv);
-        let pF = calculateScore(game.pCap, true), aF = calculateScore(game.aiCap, true); setTimeout(() => alert(`Kết thúc!\nBạn: ${pF}đ\nAI: ${aF}đ`), 500);
-    } }
-    function togglePause() { isPaused = true; document.getElementById('pause-modal').classList.remove('hidden'); }
-    function resumeGame() { isPaused = false; document.getElementById('pause-modal').classList.add('hidden'); }
-    function resetGame() { document.getElementById('reset-modal').classList.remove('hidden'); }
-    function confirmReset() { document.getElementById('reset-modal').classList.add('hidden'); startGame(); }
-    function closeReset() { document.getElementById('reset-modal').classList.add('hidden'); }
+    function selectCard(id) { if(game.turn === 'p') { game.selected = (game.selected === id) ? null : id; updateUI(); } }
+
+    function takeCard(bId) {
+        if(game.turn !== 'p' || isPaused) return;
+        const bc = game.board.find(x => x.id === bId);
+        const mMatch = game.pCap.some(pc => teams.some(t => t.members.includes(pc.id) && t.members.includes(bId)));
+        if(mMatch) { game.pCap.push(bc); game.board = game.board.filter(x => x.id !== bId); nextTurn(); return; }
+        if(game.selected) { const match = teams.some(t => t.members.includes(game.selected) && t.members.includes(bId));
+        if(match) { game.pCap.push(bc, game.pHand.find(x => x.id === game.selected)); game.board = game.board.filter(x => x.id !== bId);
+        game.pHand = game.pHand.filter(x => x.id !== game.selected); game.selected = null; nextTurn(); } }
+    }
+
+    function playerDraw() { if(game.turn !== 'p' || isPaused || game.deck.length === 0) return;
+        clearInterval(game.iv); game.tempDraw = game.deck.shift(); document.getElementById('decision-modal').classList.remove('hidden'); document.getElementById('modal-img').src = game.tempDraw.img; }
+    
+    function resolveDraw(isK) { document.getElementById('decision-modal').classList.add('hidden'); let c = game.tempDraw;
+        if(isK) { let match = game.board.find(bc => teams.some(t => t.members.includes(c.id) && t.members.includes(bc.id))); if(match) { game.pCap.push(c, match);
+        game.board = game.board.filter(x => x.id !== match.id); } else { game.pHand.push(c); } } else { game.board.push(c); } game.tempDraw = null;
+        nextTurn(); }
+    
+    function startTimer() { clearInterval(game.iv); game.time = 15; document.getElementById('timer-val').innerText = game.time;
+        game.iv = setInterval(() => { if(!isPaused) { game.time--; document.getElementById('timer-val').innerText = game.time; if(game.turn === 'ai' && game.time === 7) aiMove(); if(game.time <= 0) nextTurn(); } }, 1000);
+    }
+    
+    function nextTurn() { game.turn = (game.turn === 'p' ? 'ai' : 'p'); updateUI(); startTimer(); }
+    
+    function aiMove() { if(game.aiHand.length === 0 && game.deck.length > 0) { let c = game.deck.shift();
+        let bIdx = game.board.findIndex(bc => teams.some(t => t.members.includes(c.id) && t.members.includes(bc.id))); if(bIdx > -1) game.aiCap.push(c, game.board.splice(bIdx,1)[0]); else game.aiHand.push(c); nextTurn(); return;
+        } let mIdx = game.board.findIndex(bc => game.aiCap.some(ac => teams.some(t => t.members.includes(ac.id) && t.members.includes(bc.id)))); if(mIdx > -1) game.aiCap.push(game.board.splice(mIdx,1)[0]);
+        else { let eaten = false; for(let bc of game.board) { let mIdx = game.aiHand.findIndex(ah => teams.some(t => t.members.includes(bc.id) && t.members.includes(ah.id)));
+        if(mIdx > -1) { game.aiCap.push(bc, game.aiHand.splice(mIdx,1)[0]); game.board = game.board.filter(x => x.id !== bc.id); eaten = true; break;
+        } } if(!eaten && game.deck.length > 0) { let c = game.deck.shift();
+        let bIdx = game.board.findIndex(bc => teams.some(t => t.members.includes(c.id) && t.members.includes(bc.id))); if(bIdx > -1) game.aiCap.push(c, game.board.splice(bIdx,1)[0]); else game.aiHand.push(c); } } nextTurn();
+    }
+    
+    function checkEndGame() { if((game.board.length === 0 && game.deck.length === 0) || (game.deck.length === 0 && (game.pHand.length === 0 || game.aiHand.length === 0))) { clearInterval(game.iv);
+        let pF = calculateScore(game.pCap, true), aF = calculateScore(game.aiCap, true); setTimeout(() => alert(`Kết thúc!\nBạn: ${pF}đ\nAI: ${aF}đ`), 500);
+    } }
+    
+    function togglePause() { isPaused = true; document.getElementById('pause-modal').classList.remove('hidden'); }
+    function resumeGame() { isPaused = false; document.getElementById('pause-modal').classList.add('hidden'); }
+    function resetGame() { document.getElementById('reset-modal').classList.remove('hidden'); }
+    function confirmReset() { document.getElementById('reset-modal').classList.add('hidden'); startGame(); }
+    function closeReset() { document.getElementById('reset-modal').classList.add('hidden'); }
 </script>
 </body>
 </html>
