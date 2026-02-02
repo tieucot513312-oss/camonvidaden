@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Game Anh Tài V28 - Final Fixed UI</title>
+    <title>ATVNCG</title>
     <style>
         :root { --bg: #0a0a0a; --accent: #f1c40f; --card-w: 72px; --card-h: 100px; --panel-bg: #111; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; overflow: hidden; }
@@ -124,15 +124,13 @@
     let teams = [], at_images = {}, cardBack = "", isPaused = false;
     let game = { pHand:[], aiHand:[], board:[], deck:[], pCap:[], aiCap:[], turn:'p', selected:null, time:15, iv:null };
     
-    // FIX DRIVE URL FUNCTION: Sửa lỗi regex để lấy ID chính xác hơn
     function drive(url) { 
         if(!url || !url.includes('drive.google.com')) return url; 
         let id = url.split('/d/')[1]?.split('/')[0] || url.split('id=')[1]?.split('&')[0]; 
-        return `https://lh3.googleusercontent.com/d/${id}`; // Sử dụng endpoint mới ổn định hơn
+        return `https://lh3.googleusercontent.com/u/0/d/${id}`;
     }
 
 window.onload = async () => {
-    // Ưu tiên lấy từ LocalStorage trước để giữ thiết lập Admin
     const localData = localStorage.getItem('at_v23_data');
     if(localData) {
         const d = JSON.parse(localData);
@@ -140,24 +138,16 @@ window.onload = async () => {
         teams = d.teams || [];
         cardBack = d.cardBack || "";
     }
-
     try {
         const res = await fetch('./data.json?t=' + Date.now());
         if (res.ok) {
             const data = await res.json();
-            // Chỉ cập nhật nếu local rỗng hoặc muốn ưu tiên file JSON
             if(!cardBack) cardBack = data.cardBack || "";
             if(teams.length === 0) teams = data.teams || [];
             if(Object.keys(at_images).length === 0) at_images = data.images || {};
         }
     } catch (e) { console.log("Dùng dữ liệu Local."); }
-
     renderAdmin();
-
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('play') === 'true') {
-        startGame();
-    }
 };
 
     function renderAdmin() {
@@ -172,10 +162,8 @@ window.onload = async () => {
         const checkboxes = document.querySelectorAll('.chk-at:checked');
         const ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
         if(!name || ids.length < 2) return;
-        
         teams.push({ name, members: ids });
-        renderTeamList(); 
-        saveData();
+        renderTeamList(); saveData();
         document.getElementById('t-name').value = "";
         checkboxes.forEach(cb => cb.checked = false);
     }
@@ -199,8 +187,7 @@ window.onload = async () => {
         fullDeck.sort(() => Math.random() - 0.5);
         game.pHand = fullDeck.splice(0, 7); game.aiHand = fullDeck.splice(0, 7);
         game.board = fullDeck.splice(0, 8); game.deck = fullDeck;
-        game.pCap = [];
-        game.aiCap = []; game.turn = 'p';
+        game.pCap = []; game.aiCap = []; game.turn = 'p';
         document.getElementById('side-teams').innerHTML = teams.map(t => `<div id="tag-${t.name.replace(/\s/g,'')}" class="team-tag">${t.name}</div>`).join('');
         updateUI(); startTimer();
     }
@@ -221,16 +208,11 @@ window.onload = async () => {
         
         const pile = document.getElementById('draw-pile');
         document.getElementById('draw-count').innerText = game.deck.length;
-        // FIX: Hiển thị ảnh mặt sau
-        if(cardBack) {
-            pile.style.backgroundImage = `url('${drive(cardBack)}')`;
-            pile.style.backgroundSize = 'cover';
-        }
+        if(cardBack) pile.style.backgroundImage = `url('${drive(cardBack)}')`;
 
         const isTeamDone = (cId) => {
             const team = teams.find(t => t.members.includes(cId));
-            if(!team) return false;
-            return team.members.every(mId => [...game.pCap, ...game.aiCap].some(captured => captured.id === mId));
+            return team ? team.members.every(mId => [...game.pCap, ...game.aiCap].some(cap => cap.id === mId)) : false;
         };
 
         const cardH = (c, isP) => `<div class="card ${game.selected === c.id ? 'selected' : ''}" onclick="${isP ? `selectCard(${c.id})` : ''}"><img class="c-img-front" src="${c.img}"><div class="c-name">${c.name}</div></div>`;
@@ -239,9 +221,12 @@ window.onload = async () => {
         document.getElementById('p-hand').innerHTML = game.pHand.map(c => cardH(c, true)).join('');
         document.getElementById('ai-hand').innerHTML = game.aiHand.map(() => aiH).join('');
         
+        // SỬA LỖI HIGHLIGHT: Kiểm tra liên kết với lá đang chọn HOẶC bài đã thu thập
         document.getElementById('board').innerHTML = game.board.map(c => {
-            const hasM = game.pCap.some(pc => teams.some(t => t.members.includes(pc.id) && t.members.includes(c.id)));
-            return `<div class="card ${hasM ? 'highlight' : ''}" onclick="takeCard(${c.id})"><img class="c-img-front" src="${c.img}"><div class="c-name">${c.name}</div></div>`;
+            const linkWithSelected = game.selected && teams.some(t => t.members.includes(game.selected) && t.members.includes(c.id));
+            const linkWithCap = game.pCap.some(pc => teams.some(t => t.members.includes(pc.id) && t.members.includes(c.id)));
+            const isHighlight = (game.turn === 'p' && (linkWithSelected || linkWithCap));
+            return `<div class="card ${isHighlight ? 'highlight' : ''}" onclick="takeCard(${c.id})"><img class="c-img-front" src="${c.img}"><div class="c-name">${c.name}</div></div>`;
         }).join('');
 
         const mini = (c) => `<div class="card card-mini ${isTeamDone(c.id) ? 'team-done' : ''}"><img src="${c.img}"><div class="c-name">${c.name}</div></div>`;
@@ -261,20 +246,38 @@ window.onload = async () => {
     function takeCard(bId) {
         if(game.turn !== 'p' || isPaused) return;
         const bc = game.board.find(x => x.id === bId);
-        const mMatch = game.pCap.some(pc => teams.some(t => t.members.includes(pc.id) && t.members.includes(bId)));
-        if(mMatch) { game.pCap.push(bc); game.board = game.board.filter(x => x.id !== bId); nextTurn(); return; }
-        if(game.selected) { const match = teams.some(t => t.members.includes(game.selected) && t.members.includes(bId));
-        if(match) { game.pCap.push(bc, game.pHand.find(x => x.id === game.selected)); game.board = game.board.filter(x => x.id !== bId);
-        game.pHand = game.pHand.filter(x => x.id !== game.selected); game.selected = null; nextTurn(); } }
+        // Ưu tiên ăn bằng bài đã thu thập
+        const mMatchCap = game.pCap.some(pc => teams.some(t => t.members.includes(pc.id) && t.members.includes(bId)));
+        if(mMatchCap) { game.pCap.push(bc); game.board = game.board.filter(x => x.id !== bId); nextTurn(); return; }
+        // Ăn bằng bài trên tay
+        if(game.selected) { 
+            const matchHand = teams.some(t => t.members.includes(game.selected) && t.members.includes(bId));
+            if(matchHand) { 
+                game.pCap.push(bc, game.pHand.find(x => x.id === game.selected)); 
+                game.board = game.board.filter(x => x.id !== bId);
+                game.pHand = game.pHand.filter(x => x.id !== game.selected); 
+                game.selected = null; nextTurn(); 
+            } 
+        }
     }
 
     function playerDraw() { if(game.turn !== 'p' || isPaused || game.deck.length === 0) return;
         clearInterval(game.iv); game.tempDraw = game.deck.shift(); document.getElementById('decision-modal').classList.remove('hidden'); document.getElementById('modal-img').src = game.tempDraw.img; }
     
-    function resolveDraw(isK) { document.getElementById('decision-modal').classList.add('hidden'); let c = game.tempDraw;
-        if(isK) { let match = game.board.find(bc => teams.some(t => t.members.includes(c.id) && t.members.includes(bc.id))); if(match) { game.pCap.push(c, match);
-        game.board = game.board.filter(x => x.id !== match.id); } else { game.pHand.push(c); } } else { game.board.push(c); } game.tempDraw = null;
-        nextTurn(); }
+    // SỬA LỖI RÚT BÀI: Tự động thu thập nếu cùng team với "Đã tìm thấy nhau"
+    function resolveDraw(isK) { 
+        document.getElementById('decision-modal').classList.add('hidden'); 
+        let c = game.tempDraw;
+        if(isK) { 
+            let inCap = game.pCap.some(pc => teams.some(t => t.members.includes(pc.id) && t.members.includes(c.id)));
+            let inBoard = game.board.find(bc => teams.some(t => t.members.includes(c.id) && t.members.includes(bc.id)));
+            
+            if(inCap) { game.pCap.push(c); }
+            else if(inBoard) { game.pCap.push(c, inBoard); game.board = game.board.filter(x => x.id !== inBoard.id); }
+            else { game.pHand.push(c); }
+        } else { game.board.push(c); } 
+        game.tempDraw = null; nextTurn(); 
+    }
     
     function startTimer() { clearInterval(game.iv); game.time = 15; document.getElementById('timer-val').innerText = game.time;
         game.iv = setInterval(() => { if(!isPaused) { game.time--; document.getElementById('timer-val').innerText = game.time; if(game.turn === 'ai' && game.time === 7) aiMove(); if(game.time <= 0) nextTurn(); } }, 1000);
@@ -282,13 +285,52 @@ window.onload = async () => {
     
     function nextTurn() { game.turn = (game.turn === 'p' ? 'ai' : 'p'); updateUI(); startTimer(); }
     
-    function aiMove() { if(game.aiHand.length === 0 && game.deck.length > 0) { let c = game.deck.shift();
-        let bIdx = game.board.findIndex(bc => teams.some(t => t.members.includes(c.id) && t.members.includes(bc.id))); if(bIdx > -1) game.aiCap.push(c, game.board.splice(bIdx,1)[0]); else game.aiHand.push(c); nextTurn(); return;
-        } let mIdx = game.board.findIndex(bc => game.aiCap.some(ac => teams.some(t => t.members.includes(ac.id) && t.members.includes(bc.id)))); if(mIdx > -1) game.aiCap.push(game.board.splice(mIdx,1)[0]);
-        else { let eaten = false; for(let bc of game.board) { let mIdx = game.aiHand.findIndex(ah => teams.some(t => t.members.includes(bc.id) && t.members.includes(ah.id)));
-        if(mIdx > -1) { game.aiCap.push(bc, game.aiHand.splice(mIdx,1)[0]); game.board = game.board.filter(x => x.id !== bc.id); eaten = true; break;
-        } } if(!eaten && game.deck.length > 0) { let c = game.deck.shift();
-        let bIdx = game.board.findIndex(bc => teams.some(t => t.members.includes(c.id) && t.members.includes(bc.id))); if(bIdx > -1) game.aiCap.push(c, game.board.splice(bIdx,1)[0]); else game.aiHand.push(c); } } nextTurn();
+    // NÂNG CẤP AI: Chiến thuật và linh hoạt hơn
+    function aiMove() { 
+        if (isPaused) return;
+        let acted = false;
+
+        // 1. Ưu tiên ăn bài trên bàn bằng bài trên tay (để giải phóng bài tay)
+        for (let ah of game.aiHand) {
+            let target = game.board.find(bc => teams.some(t => t.members.includes(ah.id) && t.members.includes(bc.id)));
+            if (target) {
+                game.aiCap.push(ah, target);
+                game.aiHand = game.aiHand.filter(x => x.id !== ah.id);
+                game.board = game.board.filter(x => x.id !== target.id);
+                acted = true; break;
+            }
+        }
+
+        // 2. Ăn bài trên bàn bằng khu vực đã thu thập
+        if (!acted) {
+            let target = game.board.find(bc => game.aiCap.some(ac => teams.some(t => t.members.includes(ac.id) && t.members.includes(bc.id))));
+            if (target) {
+                game.aiCap.push(target);
+                game.board = game.board.filter(x => x.id !== target.id);
+                acted = true;
+            }
+        }
+
+        // 3. Nếu không ăn được gì, tiến hành rút bài
+        if (!acted && game.deck.length > 0) {
+            let c = game.deck.shift();
+            let linkBoard = game.board.find(bc => teams.some(t => t.members.includes(c.id) && t.members.includes(bc.id)));
+            let linkCap = game.aiCap.some(ac => teams.some(t => t.members.includes(ac.id) && t.members.includes(c.id)));
+
+            if (linkCap) {
+                game.aiCap.push(c); // Tự động thu thập nếu cùng team đã có
+            } else if (linkBoard) {
+                game.aiCap.push(c, linkBoard); // Ăn ngay nếu lá rút liên kết được bài trên bàn
+                game.board = game.board.filter(x => x.id !== linkBoard.id);
+            } else {
+                // AI Chiến thuật: Nếu bài trên tay quá nhiều, AI sẽ bỏ lá bài ra bàn để tạo cơ hội sau
+                if (game.aiHand.length > 8) game.board.push(c);
+                else game.aiHand.push(c);
+            }
+            acted = true;
+        }
+
+        nextTurn(); 
     }
     
     function checkEndGame() { if((game.board.length === 0 && game.deck.length === 0) || (game.deck.length === 0 && (game.pHand.length === 0 || game.aiHand.length === 0))) { clearInterval(game.iv);
