@@ -111,6 +111,7 @@
         return `https://lh3.googleusercontent.com/u/0/d/${id}`;
     }
 
+    // Đã khôi phục phần FETCH data.json
     window.onload = async () => {
         const localData = localStorage.getItem('at_v23_data');
         if(localData) {
@@ -119,6 +120,15 @@
             teams = d.teams || [];
             cardBack = d.cardBack || "";
         }
+        try {
+            const res = await fetch('./data.json?t=' + Date.now());
+            if (res.ok) {
+                const data = await res.json();
+                if(!cardBack) cardBack = data.cardBack || "";
+                if(teams.length === 0) teams = data.teams || [];
+                if(Object.keys(at_images).length === 0) at_images = data.images || {};
+            }
+        } catch (e) { console.log("Dùng dữ liệu Local."); }
         renderAdmin();
     };
 
@@ -160,9 +170,7 @@
 
     function calculateScore(captured, hand, isFinal = false) {
         let s = captured.length;
-        // Điểm thưởng Team: Chỉ sáng khi TOÀN BỘ team nằm ở 1 người (captured)
         teams.forEach(t => { if(t.members.every(mId => captured.some(c => c.id === mId))) s += 5; });
-        // Trừ điểm: Chỉ những lá còn trên tay (hand) cuối cùng mới bị trừ
         if(isFinal) { s -= (hand.length * 2); }
         return s;
     }
@@ -175,14 +183,6 @@
         tc.className = game.turn === 'p' ? "circle-ui p-active" : "circle-ui ai-active";
         document.getElementById('draw-count').innerText = game.deck.length;
         if(cardBack) document.getElementById('draw-pile').style.backgroundImage = `url('${drive(cardBack)}')`;
-
-        const isTeamDoneOverall = (cId) => {
-            const team = teams.find(t => t.members.includes(cId));
-            if(!team) return false;
-            // Sửa lỗi sáng đèn: Chỉ sáng khi 1 người cầm đủ cả team trong Cap
-            return team.members.every(mId => game.pCap.some(c => c.id === mId)) || 
-                   team.members.every(mId => game.aiCap.some(c => c.id === mId));
-        };
 
         const cardH = (c, isP) => `<div class="card ${game.selected === c.id ? 'selected' : ''}" onclick="${isP ? `selectCard(${c.id})` : ''}"><img class="c-img-front" src="${c.img}"><div class="c-name">${c.name}</div></div>`;
         const aiH = cardBack ? `<div class="card"><img src="${drive(cardBack)}"></div>` : `<div class="card" style="background:#222;"></div>`;
@@ -198,7 +198,6 @@
         }).join('');
 
         const mini = (c, ownerCap) => {
-            // Kiểm tra xem lá này có thuộc team đã hoàn thành của CHỦ SỞ HỮU nó không
             const myTeam = teams.find(t => t.members.includes(c.id));
             const isDone = myTeam && myTeam.members.every(mId => ownerCap.some(oc => oc.id === mId));
             return `<div class="card card-mini ${isDone ? 'team-done' : ''}"><img src="${c.img}"><div class="c-name">${c.name}</div></div>`;
@@ -277,11 +276,11 @@
         nextTurn(); 
     }
 
+    // Cơ chế vét bài cuối trận
     function autoMoveToEnd(playerHand, playerCap) {
         let changed = true;
         while(changed) {
             changed = false;
-            // 1. Check hand vs cap
             for(let i=0; i<playerHand.length; i++) {
                 let c = playerHand[i];
                 if(playerCap.some(pc => teams.some(t => t.members.includes(pc.id) && t.members.includes(c.id)))) {
@@ -289,7 +288,6 @@
                 }
             }
             if(changed) continue;
-            // 2. Check hand vs hand
             for(let i=0; i<playerHand.length; i++) {
                 for(let j=i+1; j<playerHand.length; j++) {
                     if(teams.some(t => t.members.includes(playerHand[i].id) && t.members.includes(playerHand[j].id))) {
@@ -306,29 +304,20 @@
     function checkEndGame() { 
         if((game.board.length === 0 && game.deck.length === 0) || (game.deck.length === 0 && (game.pHand.length === 0 || game.aiHand.length === 0))) { 
             clearInterval(game.iv);
-            // Auto clean up bài trên tay trước khi tính điểm
             autoMoveToEnd(game.pHand, game.pCap);
             autoMoveToEnd(game.aiHand, game.aiCap);
-
             let pF = calculateScore(game.pCap, game.pHand, true);
             let aF = calculateScore(game.aiCap, game.aiHand, true);
-            
             showEndPopup(pF, aF);
         } 
     }
 
     function showEndPopup(pScore, aiScore) {
         const modal = document.getElementById('end-modal');
-        const aiText = document.getElementById('end-score-ai');
-        const pText = document.getElementById('end-score-p');
-        const winText = document.getElementById('end-winner');
-
-        aiText.innerText = `Anh Tài: ${aiScore}`;
-        pText.innerText = `Gai Con: ${pScore}`;
-        
+        document.getElementById('end-score-ai').innerText = `Anh Tài: ${aiScore}`;
+        document.getElementById('end-score-p').innerText = `Gai Con: ${pScore}`;
         let winner = pScore > aiScore ? "Gai Con" : (aiScore > pScore ? "Anh Tài" : "Hòa nhau");
-        winText.innerText = `Chúc mừng người chiến thắng là ${winner}`;
-        
+        document.getElementById('end-winner').innerText = `Chúc mừng người chiến thắng là ${winner}`;
         modal.classList.remove('hidden');
     }
     
