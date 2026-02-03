@@ -116,6 +116,11 @@
     <div class="play-main">
         <div class="play-area"><div id="ai-hand" class="card-row-scroll"></div><div class="captured-zone"><div class="zone-label"><span>Đã tìm thấy nhau</span> <span id="score-ai" style="color:#ff4757">0</span></div><div id="ai-captured" class="captured-list"></div></div></div>
         <div class="play-area"><div id="board" class="card-row-scroll"></div></div>
+        <div id="restart-overlay" class="hidden" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 50;">
+    <button class="btn" style="background: var(--accent); color: #000; padding: 15px 30px; font-size: 18px; box-shadow: 0 0 20px rgba(241, 196, 15, 0.4);" onclick="location.reload()">
+        🔥 BẮT ĐẦU VÁN MỚI
+    </button>
+</div>
         <div class="play-area"><div class="captured-zone"><div class="zone-label"><span>Đã tìm thấy nhau</span> <span id="score-p" style="color:#2ecc71">0</span></div><div id="p-captured" class="captured-list"></div></div><div id="p-hand" class="card-row-scroll"></div></div>
         <div class="right-controls"><div class="circle-ui"><div id="timer-val">15</div><div class="timer-label">GIÂY</div></div><div id="turn-circle" class="circle-ui p-active"><div id="turn-indicator">GAI<br>CON</div></div><div id="draw-pile" onclick="playerDraw()"><span id="draw-count"></span></div></div>
     </div>
@@ -191,6 +196,7 @@
     function saveData() { localStorage.setItem('at_v23_data', JSON.stringify({ images: at_images, teams: teams, cardBack: cardBack })); }
 
     function startGame() {
+        document.getElementById('restart-overlay').classList.add('hidden');
         document.getElementById('admin-panel').classList.add('hidden');
         document.getElementById('game-screen').classList.remove('hidden');
         let fullDeck = AT_NAMES.map((n, i) => ({ id: i+1, name: n, img: drive(at_images[i+1]) }));
@@ -256,8 +262,16 @@
             if(el) el.className = ok ? 'team-tag active' : 'team-tag'; 
         });
         
-        // Gọi checkEndGame cuối cùng
-        checkEndGame();
+        const restartBtn = document.getElementById('restart-overlay');
+    if (game.isGameOver) {
+        restartBtn.classList.remove('hidden');
+    } else {
+        restartBtn.classList.add('hidden');
+    }
+
+    // Gọi checkEndGame cuối cùng
+    checkEndGame();
+}
     }
 
     function selectCard(id) { if(game.turn === 'p') { game.selected = (game.selected === id) ? null : id; updateUI(); } }
@@ -475,6 +489,7 @@ function autoMoveToEnd(playerHand, playerCap) {
 </script>
 </body>
 </html>
+
 
 
 
