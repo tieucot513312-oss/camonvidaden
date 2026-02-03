@@ -303,30 +303,66 @@
         startTimer(); 
     }
     
-    function aiMove() { 
-        if (isPaused) return;
-        let acted = false;
-        for (let ah of game.aiHand) {
-            let target = game.board.find(bc => teams.some(t => t.members.includes(ah.id) && t.members.includes(bc.id)));
-            if (target) { game.aiCap.push(ah, target); game.aiHand = game.aiHand.filter(x => x.id !== ah.id); game.board = game.board.filter(x => x.id !== target.id); acted = true; break; }
+    function aiMove() {
+    if (isPaused) return;
+    let acted = false;
+
+    // --- PHẦN 1: TỰ ĐỘNG ĂN BÀI TRÊN BÀN (Giữ nguyên logic cũ) ---
+    // 1. Quét bài trên tay xem có ăn được bài trên bàn không
+    for (let ah of game.aiHand) {
+        let target = game.board.find(bc => teams.some(t => t.members.includes(ah.id) && t.members.includes(bc.id)));
+        if (target) {
+            game.aiCap.push(ah, target);
+            game.aiHand = game.aiHand.filter(x => x.id !== ah.id);
+            game.board = game.board.filter(x => x.id !== target.id);
+            acted = true;
+            break;
         }
-        if (!acted) {
-            let target = game.board.find(bc => game.aiCap.some(ac => teams.some(t => t.members.includes(ac.id) && t.members.includes(bc.id))));
-            if (target) { game.aiCap.push(target); game.board = game.board.filter(x => x.id !== target.id); acted = true; }
-        }
-        if (!acted && game.deck.length > 0) {
-            let c = game.deck.shift();
-            let linkCap = game.aiCap.some(ac => teams.some(t => t.members.includes(ac.id) && t.members.includes(c.id)));
-            let linkHand = game.aiHand.find(ah => teams.some(t => t.members.includes(ah.id) && t.members.includes(c.id)));
-            if (linkCap) { game.aiCap.push(c); } 
-            else if (linkHand) { game.aiCap.push(c, linkHand); game.aiHand = game.aiHand.filter(x => x.id !== linkHand.id); } 
-            else { 
-                if(Math.random() > 0.5) { game.aiHand.push(c); } else { game.board.push(c); }
-            }
+    }
+    // 2. Quét bài đã ăn (Cap) xem có hốt thêm được lá nào trên bàn không
+    if (!acted) {
+        let target = game.board.find(bc => game.aiCap.some(ac => teams.some(t => t.members.includes(ac.id) && t.members.includes(bc.id))));
+        if (target) {
+            game.aiCap.push(target);
+            game.board = game.board.filter(x => x.id !== target.id);
             acted = true;
         }
-        nextTurn(); 
     }
+
+    // --- PHẦN 2: XỬ LÝ RÚT BÀI (Đây là đoạn bạn cần thay thế) ---
+    if (!acted && game.deck.length > 0) {
+        let c = game.deck.shift(); // Rút 1 lá
+        
+        // Ưu tiên 1: Quét "Đã tìm thấy nhau" (aiCap) -> Ăn luôn
+        let linkCap = game.aiCap.some(ac => teams.some(t => t.members.includes(ac.id) && t.members.includes(c.id)));
+        
+        if (linkCap) {
+            game.aiCap.push(c);
+        } else {
+            // Ưu tiên 2: Quét bài trên tay (aiHand) -> Gộp lại ăn luôn
+            let linkHand = game.aiHand.find(ah => teams.some(t => t.members.includes(ah.id) && t.members.includes(c.id)));
+            
+            if (linkHand) {
+                game.aiCap.push(c, linkHand);
+                game.aiHand = game.aiHand.filter(x => x.id !== linkHand.id);
+            } else {
+                // Ưu tiên 3: Quét bài trên bàn (board) -> Giữ lại tay (để lượt sau ăn)
+                let linkBoard = game.board.some(b => teams.some(t => t.members.includes(b.id) && t.members.includes(c.id)));
+                
+                if (linkBoard) {
+                    game.aiHand.push(c); // Lấy về
+                } else {
+                    // Ưu tiên 4: Không khớp gì cả -> Bỏ bài
+                    game.board.push(c);
+                }
+            }
+        }
+        acted = true;
+    }
+    // --- HẾT PHẦN THAY THẾ ---
+
+    nextTurn();
+}
 
     function autoMoveToEnd(playerHand, playerCap) {
         let changed = true;
@@ -398,3 +434,4 @@
 </script>
 </body>
 </html>
+
