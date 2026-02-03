@@ -237,8 +237,8 @@
             const isDone = myTeam && myTeam.members.every(mId => ownerCap.some(oc => oc.id === mId));
             return `<div class="card card-mini ${isDone ? 'team-done' : ''}"><img src="${c.img}"><div class="c-name">${c.name}</div></div>`;
         };
-        document.getElementById('p-captured').innerHTML = game.pCap.map(c => mini(c, game.pCap)).join('');
-        document.getElementById('ai-captured').innerHTML = game.aiCap.map(c => mini(c, game.aiCap)).join('');
+        document.getElementById('p-captured').innerHTML = renderCapturedSorted(game.pCap);
+        document.getElementById('ai-captured').innerHTML = renderCapturedSorted(game.aiCap);
         
         teams.forEach(t => { 
             const ok = t.members.every(mId => game.pCap.some(c => c.id === mId)) || t.members.every(mId => game.aiCap.some(c => c.id === mId)); 
@@ -267,7 +267,50 @@
             } 
         }
     }
+// Thêm hàm này vào script
+function renderCapturedSorted(capList) {
+    if (!capList || capList.length === 0) return "";
 
+    let html = "";
+    let processedIds = new Set(); // Đánh dấu các lá đã được vẽ
+    
+    // 1. Ưu tiên vẽ theo Team (Các lá có chung team sẽ đứng cạnh nhau)
+    teams.forEach(t => {
+        // Tìm những lá bài trong danh sách bắt được CÓ MẶT trong team này
+        let membersInCap = capList.filter(c => t.members.includes(c.id));
+        
+        // Nếu team này bắt được từ 2 lá trở lên (tức là đã thành hình hài 1 team)
+        // Hoặc logic game cho phép hiển thị lẻ tẻ nhưng muốn gom nhóm
+        if (membersInCap.length > 0) {
+            // Lọc ra những lá chưa được vẽ (tránh vẽ trùng nếu 1 lá thuộc 2 team)
+            let newMembers = membersInCap.filter(c => !processedIds.has(c.id));
+            
+            if (newMembers.length > 0) {
+                html += `<div class="captured-group">`;
+                newMembers.forEach(c => {
+                    processedIds.add(c.id);
+                    // Dùng lại logic hiển thị card mini
+                    const myTeam = teams.find(tm => tm.members.includes(c.id));
+                    const isDone = myTeam && myTeam.members.every(mId => capList.some(oc => oc.id === mId));
+                    html += `<div class="card card-mini ${isDone ? 'team-done' : ''}"><img src="${c.img}"><div class="c-name">${c.name}</div></div>`;
+                });
+                html += `</div>`;
+            }
+        }
+    });
+
+    // 2. Vẽ nốt những lá còn lại (nếu có - trường hợp lá lẻ chưa ghép được vào team nào rõ ràng)
+    let leftovers = capList.filter(c => !processedIds.has(c.id));
+    if (leftovers.length > 0) {
+        html += `<div class="captured-group" style="border:none">`;
+        leftovers.forEach(c => {
+             html += `<div class="card card-mini"><img src="${c.img}"><div class="c-name">${c.name}</div></div>`;
+        });
+        html += `</div>`;
+    }
+
+    return html;
+}
     function playerDraw() { 
         if(game.turn !== 'p' || isPaused || game.deck.length === 0) return;
         game.tempDraw = game.deck.shift(); 
@@ -364,29 +407,52 @@
     nextTurn();
 }
 
-    function autoMoveToEnd(playerHand, playerCap) {
-        let changed = true;
-        while(changed) {
-            changed = false;
-            for(let i=0; i<playerHand.length; i++) {
-                let c = playerHand[i];
-                if(playerCap.some(pc => teams.some(t => t.members.includes(pc.id) && t.members.includes(c.id)))) {
-                    playerCap.push(c); playerHand.splice(i, 1); changed = true; break;
-                }
+    // Thay thế toàn bộ hàm autoMoveToEnd cũ bằng hàm này
+function autoMoveToEnd(playerHand, playerCap) {
+    let changed = true;
+    // Chạy vòng lặp đến khi nào không còn gì để di chuyển thì thôi
+    while (changed) {
+        changed = false;
+        
+        // 1. Quét bài trên tay, nếu dính với bài đã bắt -> Đẩy xuống
+        for (let i = 0; i < playerHand.length; i++) {
+            let c = playerHand[i];
+            // Kiểm tra lá c có thuộc team nào đang nằm trong khu vực đã bắt (playerCap) không
+            let hasLink = playerCap.some(pc => 
+                teams.some(t => t.members.includes(pc.id) && t.members.includes(c.id))
+            );
+
+            if (hasLink) {
+                playerCap.push(c);
+                playerHand.splice(i, 1);
+                i--; // Lùi index lại để không bị sót phần tử kế tiếp do vừa xóa
+                changed = true;
             }
-            if(changed) continue;
-            for(let i=0; i<playerHand.length; i++) {
-                for(let j=i+1; j<playerHand.length; j++) {
-                    if(teams.some(t => t.members.includes(playerHand[i].id) && t.members.includes(playerHand[j].id))) {
+        }
+
+        // 2. Quét bài trên tay, nếu 2 lá trên tay tự ghép thành team -> Đẩy cả 2 xuống
+        // (Đoạn này giữ nguyên logic của bạn nhưng thêm i-- và j--)
+        if (!changed) {
+            for (let i = 0; i < playerHand.length; i++) {
+                for (let j = i + 1; j < playerHand.length; j++) {
+                    let isTeam = teams.some(t => 
+                        t.members.includes(playerHand[i].id) && t.members.includes(playerHand[j].id)
+                    );
+                    
+                    if (isTeam) {
                         playerCap.push(playerHand[i], playerHand[j]);
-                        playerHand.splice(j, 1); playerHand.splice(i, 1);
-                        changed = true; break;
+                        // Xóa j trước để không ảnh hưởng index của i
+                        playerHand.splice(j, 1); 
+                        playerHand.splice(i, 1);
+                        changed = true;
+                        break; 
                     }
                 }
-                if(changed) break;
+                if (changed) break;
             }
         }
     }
+}
     
     function hasPossibleMove(hand, cap) {
         const handMatch = hand.some(h => game.board.some(b => teams.some(t => t.members.includes(h.id) && t.members.includes(b.id))));
@@ -434,4 +500,5 @@
 </script>
 </body>
 </html>
+
 
