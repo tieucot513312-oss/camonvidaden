@@ -120,13 +120,50 @@
         <div class="right-controls"><div class="circle-ui"><div id="timer-val">15</div><div class="timer-label">GIÂY</div></div><div id="turn-circle" class="circle-ui p-active"><div id="turn-indicator">GAI<br>CON</div></div><div id="draw-pile" onclick="playerDraw()"><span id="draw-count"></span></div></div>
     </div>
 <div class="side-bar">
-    <div style="text-align:center; margin-bottom: 10px;">
-        <h4 style="color:var(--accent); margin:0;">CÁC TEAM</h4>
-        <small style="color: white; font-size: 10px; opacity: 0.8;">Tự ôn bài nhé!</small>
-    </div>
-    <div id="side-teams" class="scroll-v" style="height:450px;"></div>        
-    </div><button class="btn" style="background:#3498db;" onclick="togglePause()">Tạm dừng</button><button class="btn" style="background:#9b59b6;" onclick="resetGame()">Làm lại</button></div>
-</div>
+        <div style="text-align:center; margin-bottom: 10px;">
+            <h4 style="color:var(--accent); margin:0;">CÁC TEAM</h4>
+            <small style="color: white; font-size: 10px; opacity: 0.8;">Tự ôn bài nhé!</small>
+        </div>
+
+        <div id="side-teams" class="scroll-v" style="height: 400px; margin-bottom: 15px;"></div>        
+        
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button class="btn" style="background:#3498db; padding: 12px;" onclick="togglePause()">☕ TẠM DỪNG</button>
+            <button class="btn" style="background:#9b59b6; padding: 12px;" onclick="resetGame()">🔄 LÀM LẠI</button>
+        </div>
+    </div> </div> ```
+
+### 2. Kiểm tra lại Logic JavaScript (Cuối file)
+Để Popup hiện lên mượt mà, hãy đảm bảo các hàm ở cuối thẻ `<script>` của bạn trông như thế này:
+
+```javascript
+// Hàm mở Modal Nghỉ giải lao
+function togglePause() { 
+    isPaused = true; 
+    document.getElementById('pause-modal').classList.remove('hidden'); 
+}
+
+// Hàm đóng Modal Nghỉ giải lao (nút OK Tiếp tục)
+function resumeGame() { 
+    isPaused = false; 
+    document.getElementById('pause-modal').classList.add('hidden'); 
+}
+
+// Hàm mở Modal Cảnh báo làm lại
+function resetGame() { 
+    document.getElementById('reset-modal').classList.remove('hidden'); 
+}
+
+// Hàm đóng Modal Cảnh báo (nút Thôi chơi tiếp)
+function closeReset() { 
+    document.getElementById('reset-modal').classList.add('hidden'); 
+}
+
+// Hàm xác nhận reset ván mới
+function confirmReset() { 
+    document.getElementById('reset-modal').classList.add('hidden'); 
+    startGame(); // Gọi lại hàm bắt đầu game
+}
 
 <script>
     const AT_NAMES = ["Hồng Sơn","Bằng Kiều","Tự Long","Phan Đinh Tùng","Tuấn Hưng","Đinh Tiến Đạt","Phạm Khánh Hưng","Tiến Luật","Thành Trung","Đăng Khôi","Trương Thế Vinh","Hà Lê","Đỗ Hoàng Hiệp","Thanh Duy","Quốc Thiên","Binz","Cường Seven","Nguyễn Trần Duy Nhất","Jun Phạm","Neko Lê","Tăng Phúc","Thiên Minh","BB Trần","Liên Bỉnh Phát","S.T Sơn Thạch","Rhymastic","Kiên Ứng","(S)TRONG Trọng Hiếu","Soobin Hoàng Sơn","Kay Trần","Bùi Công Nam","Duy Khánh","HuyR","Anh Tuấn","SLIMV","Đinh Hà Uyên Thư","Vĩ Khang","Long Kenji","Khánh Vy","Nhà Đam Mê","Nhà KK","Nhà Sao Sáng","Nhà Tái Sinh","Nhà Ngũ Hành","Nhà Hát","Nhà Xuân Hạ Thu Đông","Nhà Xương Rồng","Gai Con","Concert","Hỏa Ca"];
@@ -475,6 +512,7 @@ function autoMoveToEnd(playerHand, playerCap) {
 </script>
 </body>
 </html>
+
 
 
 
