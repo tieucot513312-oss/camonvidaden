@@ -461,14 +461,23 @@ function autoMoveToEnd(playerHand, playerCap) {
         } 
     }
 
-    function showEndPopup(pScore, aiScore) {
-        const modal = document.getElementById('end-modal');
-        document.getElementById('end-score-ai').innerText = `Anh Tài: ${aiScore}`;
-        document.getElementById('end-score-p').innerText = `Gai Con: ${pScore}`;
-        let winner = pScore > aiScore ? "Gai Con" : (aiScore > pScore ? "Anh Tài" : "Hòa nhau");
-        document.getElementById('end-winner').innerText = `Chúc mừng người chiến thắng là ${winner}`;
-        modal.classList.remove('hidden');
+function showEndPopup(pScore, aiScore) {
+    const modal = document.getElementById('end-modal');
+    document.getElementById('end-score-ai').innerText = `Anh Tài: ${aiScore}`;
+    document.getElementById('end-score-p').innerText = `Gai Con: ${pScore}`;
+
+    let resultText = "";
+    if (pScore > aiScore) {
+        resultText = "Thắng rồi, NÉT.";
+    } else if (aiScore > pScore) {
+        resultText = "Đen thôi, ĐỎ QUÊN ĐI";
+    } else {
+        resultText = "Hòa nhau rồi!";
     }
+
+    document.getElementById('end-winner').innerText = resultText;
+    modal.classList.remove('hidden');
+}
     function hideEndModal() {
     document.getElementById('end-modal').classList.add('hidden');
 }
@@ -480,5 +489,6 @@ function autoMoveToEnd(playerHand, playerCap) {
 </script>
 </body>
 </html>
+
 
 
