@@ -229,7 +229,6 @@
 
         const cardH = (c, isP) => `<div class="card ${game.selected === c.id ? 'selected' : ''}" onclick="${isP ? `selectCard(${c.id})` : ''}"><img class="c-img-front" src="${c.img}"><div class="c-name">${c.name}</div></div>`;
         
-        // Logic lật bài AI khi game over
         document.getElementById('ai-hand').innerHTML = game.aiHand.map(c => {
             if (game.isGameOver) {
                 return `<div class="card"><img class="c-img-front" src="${c.img}"><div class="c-name">${c.name}</div></div>`;
@@ -261,7 +260,6 @@
             if(el) el.className = ok ? 'team-tag active' : 'team-tag'; 
         });
         
-        // Gọi checkEndGame cuối cùng
         checkEndGame();
     }
 
@@ -282,22 +280,15 @@
             } 
         }
     }
-// --- THAY THẾ TỪ ĐÂY ---
 
 function renderCapturedSorted(capList) {
     if (!capList || capList.length === 0) return "";
-
-    // 1. Tạo bản sao để sắp xếp
     let sortedList = [...capList];
-
-    // 2. Sắp xếp: Các lá cùng Team đứng cạnh nhau
     sortedList.sort((a, b) => {
         const teamA = teams.findIndex(t => t.members.includes(a.id));
         const teamB = teams.findIndex(t => t.members.includes(b.id));
         return teamA - teamB;
     });
-
-    // 3. Trả về HTML phẳng (Giúp bài nằm trên 1 hàng ngang)
     return sortedList.map(c => {
         const myTeam = teams.find(t => t.members.includes(c.id));
         const isDone = myTeam && myTeam.members.every(mId => capList.some(oc => oc.id === mId));
@@ -429,8 +420,6 @@ function autoMoveToEnd(playerHand, playerCap) {
         }
     }
 }
-
-// --- HẾT ĐOẠN THAY THẾ ---
     
     function hasPossibleMove(hand, cap) {
         const handMatch = hand.some(h => game.board.some(b => teams.some(t => t.members.includes(h.id) && t.members.includes(b.id))));
@@ -439,7 +428,6 @@ function autoMoveToEnd(playerHand, playerCap) {
     }
 
     function checkEndGame() { 
-        // QUAN TRỌNG: Ngăn chặn vòng lặp vô tận
         if (game.isGameOver) return;
 
         const noMovesLeft = game.deck.length === 0 && !hasPossibleMove(game.pHand, game.pCap) && !hasPossibleMove(game.aiHand, game.aiCap);
@@ -449,11 +437,11 @@ function autoMoveToEnd(playerHand, playerCap) {
            noMovesLeft) { 
             
             clearInterval(game.iv);
-            game.isGameOver = true; // Đánh dấu game over ngay lập tức
+            game.isGameOver = true; 
             autoMoveToEnd(game.pHand, game.pCap);
             autoMoveToEnd(game.aiHand, game.aiCap);
             
-            updateUI(); // Gọi updateUI 1 lần cuối để lật bài (nhờ dòng check ở đầu hàm này mà nó sẽ không lặp lại)
+            updateUI(); 
             
             let pF = calculateScore(game.pCap, game.pHand, true);
             let aF = calculateScore(game.aiCap, game.aiHand, true);
@@ -489,6 +477,7 @@ function showEndPopup(pScore, aiScore) {
 </script>
 </body>
 </html>
+
 
 
 
