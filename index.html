@@ -267,83 +267,76 @@
             } 
         }
     }
-// Thêm hàm này vào script
+// --- THAY THẾ TỪ ĐÂY ---
+
 function renderCapturedSorted(capList) {
     if (!capList || capList.length === 0) return "";
 
-    // 1. Tạo một bản sao mảng để sắp xếp mà không làm hỏng dữ liệu gốc
+    // 1. Tạo bản sao để sắp xếp
     let sortedList = [...capList];
 
-    // 2. Sắp xếp mảng: Các lá có cùng Team sẽ được đẩy lại gần nhau
+    // 2. Sắp xếp: Các lá cùng Team đứng cạnh nhau
     sortedList.sort((a, b) => {
-        // Tìm team đầu tiên mà lá bài a thuộc về
         const teamA = teams.findIndex(t => t.members.includes(a.id));
         const teamB = teams.findIndex(t => t.members.includes(b.id));
         return teamA - teamB;
     });
 
-    // 3. Trả về chuỗi HTML phẳng (không có div bao ngoài từng nhóm)
+    // 3. Trả về HTML phẳng (Giúp bài nằm trên 1 hàng ngang)
     return sortedList.map(c => {
         const myTeam = teams.find(t => t.members.includes(c.id));
         const isDone = myTeam && myTeam.members.every(mId => capList.some(oc => oc.id === mId));
-        // Giữ nguyên class card-mini như cũ của bạn để nó nằm hàng ngang
         return `<div class="card card-mini ${isDone ? 'team-done' : ''}"><img src="${c.img}"><div class="c-name">${c.name}</div></div>`;
     }).join('');
 }
 
-    // 2. Vẽ nốt những lá còn lại (nếu có - trường hợp lá lẻ chưa ghép được vào team nào rõ ràng)
-    let leftovers = capList.filter(c => !processedIds.has(c.id));
-    if (leftovers.length > 0) {
-        html += `<div class="captured-group" style="border:none">`;
-        leftovers.forEach(c => {
-             html += `<div class="card card-mini"><img src="${c.img}"><div class="c-name">${c.name}</div></div>`;
-        });
-        html += `</div>`;
-    }
-
-    return html;
+function playerDraw() { 
+    if(game.turn !== 'p' || isPaused || game.deck.length === 0) return;
+    game.tempDraw = game.deck.shift(); 
+    document.getElementById('decision-modal').classList.remove('hidden'); 
+    document.getElementById('modal-img').src = game.tempDraw.img; 
 }
-    function playerDraw() { 
-        if(game.turn !== 'p' || isPaused || game.deck.length === 0) return;
-        game.tempDraw = game.deck.shift(); 
-        document.getElementById('decision-modal').classList.remove('hidden'); 
-        document.getElementById('modal-img').src = game.tempDraw.img; 
-    }
-    
-    function resolveDraw(isK) { 
+
+function resolveDraw(isK) { 
+    document.getElementById('decision-modal').classList.add('hidden'); 
+    let c = game.tempDraw;
+    if(isK) { 
+        let inCap = game.pCap.some(pc => teams.some(t => t.members.includes(pc.id) && t.members.includes(c.id)));
+        let inHandMatch = game.pHand.find(ph => teams.some(t => t.members.includes(ph.id) && t.members.includes(c.id)));
+        if (inCap) { game.pCap.push(c); } 
+        else if (inHandMatch) { game.pCap.push(c, inHandMatch); game.pHand = game.pHand.filter(x => x.id !== inHandMatch.id); } 
+        else { game.pHand.push(c); }
+    } else { game.board.push(c); } 
+    game.tempDraw = null; nextTurn(); 
+}
+
+function startTimer() { 
+    clearInterval(game.iv); game.time = 15; document.getElementById('timer-val').innerText = game.time;
+    game.iv = setInterval(() => { 
+        if(!isPaused) { 
+            game.time--; 
+            document.getElementById('timer-val').innerText = game.time; 
+            if(game.turn === 'ai' && game.time === 7) aiMove(); 
+            if(game.time <= 0) nextTurn(); 
+        } 
+    }, 1000);
+}
+
+function nextTurn() { 
+    if(game.tempDraw) { 
+        game.board.push(game.tempDraw); 
+        game.tempDraw = null; 
         document.getElementById('decision-modal').classList.add('hidden'); 
-        let c = game.tempDraw;
-        if(isK) { 
-            let inCap = game.pCap.some(pc => teams.some(t => t.members.includes(pc.id) && t.members.includes(c.id)));
-            let inHandMatch = game.pHand.find(ph => teams.some(t => t.members.includes(ph.id) && t.members.includes(c.id)));
-            if (inCap) { game.pCap.push(c); } 
-            else if (inHandMatch) { game.pCap.push(c, inHandMatch); game.pHand = game.pHand.filter(x => x.id !== inHandMatch.id); } 
-            else { game.pHand.push(c); }
-        } else { game.board.push(c); } 
-        game.tempDraw = null; nextTurn(); 
     }
-    
-    function startTimer() { clearInterval(game.iv); game.time = 15; document.getElementById('timer-val').innerText = game.time;
-        game.iv = setInterval(() => { if(!isPaused) { game.time--; document.getElementById('timer-val').innerText = game.time; if(game.turn === 'ai' && game.time === 7) aiMove(); if(game.time <= 0) nextTurn(); } }, 1000);
-    }
-    
-    function nextTurn() { 
-        if(game.tempDraw) { 
-            game.board.push(game.tempDraw); 
-            game.tempDraw = null; 
-            document.getElementById('decision-modal').classList.add('hidden'); 
-        }
-        game.turn = (game.turn === 'p' ? 'ai' : 'p'); 
-        updateUI(); 
-        startTimer(); 
-    }
-    
-    function aiMove() {
+    game.turn = (game.turn === 'p' ? 'ai' : 'p'); 
+    updateUI(); 
+    startTimer(); 
+}
+
+function aiMove() {
     if (isPaused) return;
     let acted = false;
 
-    // --- PHẦN 1: TỰ ĐỘNG ĂN BÀI TRÊN BÀN (Giữ nguyên logic cũ) ---
-    // 1. Quét bài trên tay xem có ăn được bài trên bàn không
     for (let ah of game.aiHand) {
         let target = game.board.find(bc => teams.some(t => t.members.includes(ah.id) && t.members.includes(bc.id)));
         if (target) {
@@ -354,7 +347,6 @@ function renderCapturedSorted(capList) {
             break;
         }
     }
-    // 2. Quét bài đã ăn (Cap) xem có hốt thêm được lá nào trên bàn không
     if (!acted) {
         let target = game.board.find(bc => game.aiCap.some(ac => teams.some(t => t.members.includes(ac.id) && t.members.includes(bc.id))));
         if (target) {
@@ -364,76 +356,51 @@ function renderCapturedSorted(capList) {
         }
     }
 
-    // --- PHẦN 2: XỬ LÝ RÚT BÀI (Đây là đoạn bạn cần thay thế) ---
     if (!acted && game.deck.length > 0) {
-        let c = game.deck.shift(); // Rút 1 lá
-        
-        // Ưu tiên 1: Quét "Đã tìm thấy nhau" (aiCap) -> Ăn luôn
+        let c = game.deck.shift(); 
         let linkCap = game.aiCap.some(ac => teams.some(t => t.members.includes(ac.id) && t.members.includes(c.id)));
-        
         if (linkCap) {
             game.aiCap.push(c);
         } else {
-            // Ưu tiên 2: Quét bài trên tay (aiHand) -> Gộp lại ăn luôn
             let linkHand = game.aiHand.find(ah => teams.some(t => t.members.includes(ah.id) && t.members.includes(c.id)));
-            
             if (linkHand) {
                 game.aiCap.push(c, linkHand);
                 game.aiHand = game.aiHand.filter(x => x.id !== linkHand.id);
             } else {
-                // Ưu tiên 3: Quét bài trên bàn (board) -> Giữ lại tay (để lượt sau ăn)
                 let linkBoard = game.board.some(b => teams.some(t => t.members.includes(b.id) && t.members.includes(c.id)));
-                
-                if (linkBoard) {
-                    game.aiHand.push(c); // Lấy về
-                } else {
-                    // Ưu tiên 4: Không khớp gì cả -> Bỏ bài
-                    game.board.push(c);
-                }
+                if (linkBoard) { game.aiHand.push(c); } 
+                else { game.board.push(c); }
             }
         }
         acted = true;
     }
-    // --- HẾT PHẦN THAY THẾ ---
-
     nextTurn();
 }
 
-    // Thay thế toàn bộ hàm autoMoveToEnd cũ bằng hàm này
 function autoMoveToEnd(playerHand, playerCap) {
     let changed = true;
-    // Chạy vòng lặp đến khi nào không còn gì để di chuyển thì thôi
     while (changed) {
         changed = false;
-        
-        // 1. Quét bài trên tay, nếu dính với bài đã bắt -> Đẩy xuống
         for (let i = 0; i < playerHand.length; i++) {
             let c = playerHand[i];
-            // Kiểm tra lá c có thuộc team nào đang nằm trong khu vực đã bắt (playerCap) không
             let hasLink = playerCap.some(pc => 
                 teams.some(t => t.members.includes(pc.id) && t.members.includes(c.id))
             );
-
             if (hasLink) {
                 playerCap.push(c);
                 playerHand.splice(i, 1);
-                i--; // Lùi index lại để không bị sót phần tử kế tiếp do vừa xóa
+                i--;
                 changed = true;
             }
         }
-
-        // 2. Quét bài trên tay, nếu 2 lá trên tay tự ghép thành team -> Đẩy cả 2 xuống
-        // (Đoạn này giữ nguyên logic của bạn nhưng thêm i-- và j--)
         if (!changed) {
             for (let i = 0; i < playerHand.length; i++) {
                 for (let j = i + 1; j < playerHand.length; j++) {
                     let isTeam = teams.some(t => 
                         t.members.includes(playerHand[i].id) && t.members.includes(playerHand[j].id)
                     );
-                    
                     if (isTeam) {
                         playerCap.push(playerHand[i], playerHand[j]);
-                        // Xóa j trước để không ảnh hưởng index của i
                         playerHand.splice(j, 1); 
                         playerHand.splice(i, 1);
                         changed = true;
@@ -445,6 +412,8 @@ function autoMoveToEnd(playerHand, playerCap) {
         }
     }
 }
+
+// --- HẾT ĐOẠN THAY THẾ ---
     
     function hasPossibleMove(hand, cap) {
         const handMatch = hand.some(h => game.board.some(b => teams.some(t => t.members.includes(h.id) && t.members.includes(b.id))));
@@ -492,6 +461,7 @@ function autoMoveToEnd(playerHand, playerCap) {
 </script>
 </body>
 </html>
+
 
 
 
