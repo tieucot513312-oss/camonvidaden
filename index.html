@@ -271,33 +271,25 @@
 function renderCapturedSorted(capList) {
     if (!capList || capList.length === 0) return "";
 
-    let html = "";
-    let processedIds = new Set(); // Đánh dấu các lá đã được vẽ
-    
-    // 1. Ưu tiên vẽ theo Team (Các lá có chung team sẽ đứng cạnh nhau)
-    teams.forEach(t => {
-        // Tìm những lá bài trong danh sách bắt được CÓ MẶT trong team này
-        let membersInCap = capList.filter(c => t.members.includes(c.id));
-        
-        // Nếu team này bắt được từ 2 lá trở lên (tức là đã thành hình hài 1 team)
-        // Hoặc logic game cho phép hiển thị lẻ tẻ nhưng muốn gom nhóm
-        if (membersInCap.length > 0) {
-            // Lọc ra những lá chưa được vẽ (tránh vẽ trùng nếu 1 lá thuộc 2 team)
-            let newMembers = membersInCap.filter(c => !processedIds.has(c.id));
-            
-            if (newMembers.length > 0) {
-                html += `<div class="captured-group">`;
-                newMembers.forEach(c => {
-                    processedIds.add(c.id);
-                    // Dùng lại logic hiển thị card mini
-                    const myTeam = teams.find(tm => tm.members.includes(c.id));
-                    const isDone = myTeam && myTeam.members.every(mId => capList.some(oc => oc.id === mId));
-                    html += `<div class="card card-mini ${isDone ? 'team-done' : ''}"><img src="${c.img}"><div class="c-name">${c.name}</div></div>`;
-                });
-                html += `</div>`;
-            }
-        }
+    // 1. Tạo một bản sao mảng để sắp xếp mà không làm hỏng dữ liệu gốc
+    let sortedList = [...capList];
+
+    // 2. Sắp xếp mảng: Các lá có cùng Team sẽ được đẩy lại gần nhau
+    sortedList.sort((a, b) => {
+        // Tìm team đầu tiên mà lá bài a thuộc về
+        const teamA = teams.findIndex(t => t.members.includes(a.id));
+        const teamB = teams.findIndex(t => t.members.includes(b.id));
+        return teamA - teamB;
     });
+
+    // 3. Trả về chuỗi HTML phẳng (không có div bao ngoài từng nhóm)
+    return sortedList.map(c => {
+        const myTeam = teams.find(t => t.members.includes(c.id));
+        const isDone = myTeam && myTeam.members.every(mId => capList.some(oc => oc.id === mId));
+        // Giữ nguyên class card-mini như cũ của bạn để nó nằm hàng ngang
+        return `<div class="card card-mini ${isDone ? 'team-done' : ''}"><img src="${c.img}"><div class="c-name">${c.name}</div></div>`;
+    }).join('');
+}
 
     // 2. Vẽ nốt những lá còn lại (nếu có - trường hợp lá lẻ chưa ghép được vào team nào rõ ràng)
     let leftovers = capList.filter(c => !processedIds.has(c.id));
@@ -500,5 +492,6 @@ function autoMoveToEnd(playerHand, playerCap) {
 </script>
 </body>
 </html>
+
 
 
