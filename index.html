@@ -2,6 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ATVNCG - Final Edition</title>
     <style>
         #admin-panel { 
@@ -130,7 +131,7 @@
     }
 
     window.onload = async () => {
-    // 1. Lấy dữ liệu (giữ nguyên đoạn fetch dữ liệu của bạn)
+    // 1. Lấy dữ liệu
     const localData = localStorage.getItem('at_v23_data');
     if(localData) {
         const d = JSON.parse(localData);
@@ -258,8 +259,14 @@
         }
     }
 
-    function playerDraw() { if(game.turn !== 'p' || isPaused || game.deck.length === 0) return;
-        clearInterval(game.iv); game.tempDraw = game.deck.shift(); document.getElementById('decision-modal').classList.remove('hidden'); document.getElementById('modal-img').src = game.tempDraw.img; }
+    // SỬA LỖI 2: Không dừng đồng hồ khi rút bài để tạo áp lực thời gian
+    function playerDraw() { 
+        if(game.turn !== 'p' || isPaused || game.deck.length === 0) return;
+        // Đã xóa lệnh clearInterval(game.iv);
+        game.tempDraw = game.deck.shift(); 
+        document.getElementById('decision-modal').classList.remove('hidden'); 
+        document.getElementById('modal-img').src = game.tempDraw.img; 
+    }
     
     function resolveDraw(isK) { 
         document.getElementById('decision-modal').classList.add('hidden'); 
@@ -278,7 +285,18 @@
         game.iv = setInterval(() => { if(!isPaused) { game.time--; document.getElementById('timer-val').innerText = game.time; if(game.turn === 'ai' && game.time === 7) aiMove(); if(game.time <= 0) nextTurn(); } }, 1000);
     }
     
-    function nextTurn() { game.turn = (game.turn === 'p' ? 'ai' : 'p'); updateUI(); startTimer(); }
+    function nextTurn() { 
+        // SỬA LỖI 2 (Phần bổ sung): Nếu hết giờ mà đang rút bài dở thì tự động trả về bàn và đóng modal
+        if(game.tempDraw) { 
+            game.board.push(game.tempDraw); 
+            game.tempDraw = null; 
+            document.getElementById('decision-modal').classList.add('hidden'); 
+        }
+
+        game.turn = (game.turn === 'p' ? 'ai' : 'p'); 
+        updateUI(); 
+        startTimer(); 
+    }
     
     function aiMove() { 
         if (isPaused) return;
@@ -327,8 +345,21 @@
         }
     }
     
+    // Hàm phụ trợ cho việc check hết nước đi (SỬA LỖI 1)
+    function hasPossibleMove(hand, cap) {
+        const handMatch = hand.some(h => game.board.some(b => teams.some(t => t.members.includes(h.id) && t.members.includes(b.id))));
+        const capMatch = game.board.some(b => cap.some(c => teams.some(t => t.members.includes(c.id) && t.members.includes(b.id))));
+        return handMatch || capMatch;
+    }
+
     function checkEndGame() { 
-        if((game.board.length === 0 && game.deck.length === 0) || (game.deck.length === 0 && (game.pHand.length === 0 || game.aiHand.length === 0))) { 
+        // SỬA LỖI 1: Kiểm tra thêm điều kiện Deck=0 mà cả 2 bên đều không đi được nữa
+        const noMovesLeft = game.deck.length === 0 && !hasPossibleMove(game.pHand, game.pCap) && !hasPossibleMove(game.aiHand, game.aiCap);
+
+        if((game.board.length === 0 && game.deck.length === 0) || 
+           (game.deck.length === 0 && (game.pHand.length === 0 || game.aiHand.length === 0)) ||
+           noMovesLeft) { 
+            
             clearInterval(game.iv);
             autoMoveToEnd(game.pHand, game.pCap);
             autoMoveToEnd(game.aiHand, game.aiCap);
@@ -355,7 +386,3 @@
 </script>
 </body>
 </html>
-
-
-
-
