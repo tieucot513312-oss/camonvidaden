@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATVNCG - Final Edition</title>
+    <title>Cảm Ơn Vì Đã Đến</title>
     <style>
         #admin-panel { 
     display: none; /* Thêm dòng này để mặc định ẩn ngay từ đầu */
@@ -317,7 +317,14 @@ for (let i = fullDeck.length - 1; i > 0; i--) {
             let linkHand = game.aiHand.find(ah => teams.some(t => t.members.includes(ah.id) && t.members.includes(c.id)));
             if (linkCap) { game.aiCap.push(c); } 
             else if (linkHand) { game.aiCap.push(c, linkHand); game.aiHand = game.aiHand.filter(x => x.id !== linkHand.id); } 
-            else { game.aiHand.push(c); }
+            else { 
+    // 50-50: Bot giữ bài hoặc vứt ra bàn như người chơi
+    if(Math.random() > 0.5) {
+        game.aiHand.push(c); 
+    } else {
+        game.board.push(c); // Bot vứt bài ra bàn
+    }
+}
             acted = true;
         }
         nextTurn(); 
@@ -388,5 +395,6 @@ for (let i = fullDeck.length - 1; i > 0; i--) {
 </script>
 </body>
 </html>
+
 
 
