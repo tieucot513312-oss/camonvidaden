@@ -6,12 +6,11 @@
     <title>Cảm Ơn Vì Đã Đến</title>
     <style>
         #admin-panel { 
-    display: none; /* Thêm dòng này để mặc định ẩn ngay từ đầu */
-    background: #1a1a1a; 
-    padding: 15px; 
-    border-bottom: 3px solid #333; 
-    /* ... các thuộc tính khác giữ nguyên ... */
-}
+            display: none; 
+            background: #1a1a1a; 
+            padding: 15px; 
+            border-bottom: 3px solid #333; 
+        }
         :root { --bg: #0a0a0a; --accent: #f1c40f; --card-w: 72px; --card-h: 100px; --panel-bg: #111; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; overflow: hidden; }
         #admin-panel { background: #1a1a1a; padding: 15px; border-bottom: 3px solid #333; height: auto; max-height: 90vh; overflow-y: auto; z-index: 1000; position: relative; }
@@ -122,7 +121,6 @@
 <script>
     const AT_NAMES = ["Hồng Sơn","Bằng Kiều","Tự Long","Phan Đinh Tùng","Tuấn Hưng","Đinh Tiến Đạt","Phạm Khánh Hưng","Tiến Luật","Thành Trung","Đăng Khôi","Trương Thế Vinh","Hà Lê","Đỗ Hoàng Hiệp","Thanh Duy","Quốc Thiên","Binz","Cường Seven","Nguyễn Trần Duy Nhất","Jun Phạm","Neko Lê","Tăng Phúc","Thiên Minh","BB Trần","Liên Bỉnh Phát","S.T Sơn Thạch","Rhymastic","Kiên Ứng","(S)TRONG Trọng Hiếu","Soobin Hoàng Sơn","Kay Trần","Bùi Công Nam","Duy Khánh","HuyR","Anh Tuấn","SLIMV","Đinh Hà Uyên Thư","Vĩ Khang","Long Kenji","Khánh Vy","Nhà Đam Mê","Nhà KK","Nhà Sao Sáng","Nhà Tái Sinh","Nhà Ngũ Hành","Nhà Hát","Nhà Xuân Hạ Thu Đông","Nhà Xương Rồng","Gai Con","Concert","Hỏa Ca"];
     let teams = [], at_images = {}, cardBack = "", isPaused = false;
-    // Cập nhật: Thêm thuộc tính isGameOver vào game state
     let game = { pHand:[], aiHand:[], board:[], deck:[], pCap:[], aiCap:[], turn:'p', selected:null, time:15, iv:null, isGameOver: false };
     
     function drive(url) { 
@@ -132,7 +130,6 @@
     }
 
     window.onload = async () => {
-    // 1. Lấy dữ liệu
     const localData = localStorage.getItem('at_v23_data');
     if(localData) {
         const d = JSON.parse(localData);
@@ -150,12 +147,10 @@
         }
     } catch (e) { console.log("Dùng dữ liệu Local."); }
 
-    // 2. Kiểm tra URL để hiển thị giao diện phù hợp
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('play') === 'true') {
-        startGame(); // Hàm này sẽ tự mở #game-screen
+        startGame();
     } else {
-        // Nếu không chơi ngay, thì mới hiện Admin Panel ra
         document.getElementById('admin-panel').style.display = 'block';
         renderAdmin();
     }
@@ -189,13 +184,14 @@
         document.getElementById('admin-panel').classList.add('hidden');
         document.getElementById('game-screen').classList.remove('hidden');
         let fullDeck = AT_NAMES.map((n, i) => ({ id: i+1, name: n, img: drive(at_images[i+1]) }));
-for (let i = fullDeck.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [fullDeck[i], fullDeck[j]] = [fullDeck[j], fullDeck[i]];
-}        game.pHand = fullDeck.splice(0, 7); game.aiHand = fullDeck.splice(0, 7);
+        for (let i = fullDeck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [fullDeck[i], fullDeck[j]] = [fullDeck[j], fullDeck[i]];
+        }
+        game.pHand = fullDeck.splice(0, 7); game.aiHand = fullDeck.splice(0, 7);
         game.board = fullDeck.splice(0, 8); game.deck = fullDeck;
         game.pCap = []; game.aiCap = []; game.turn = 'p';
-        game.isGameOver = false; // Reset trạng thái game over
+        game.isGameOver = false;
         document.getElementById('side-teams').innerHTML = teams.map(t => `<div id="tag-${t.name.replace(/\s/g,'')}" class="team-tag">${t.name}</div>`).join('');
         updateUI(); startTimer();
     }
@@ -218,7 +214,7 @@ for (let i = fullDeck.length - 1; i > 0; i--) {
 
         const cardH = (c, isP) => `<div class="card ${game.selected === c.id ? 'selected' : ''}" onclick="${isP ? `selectCard(${c.id})` : ''}"><img class="c-img-front" src="${c.img}"><div class="c-name">${c.name}</div></div>`;
         
-        // Cập nhật: Logic render bài của AI - Nếu game over thì hiện mặt, còn không thì hiện lưng
+        // Logic lật bài AI khi game over
         document.getElementById('ai-hand').innerHTML = game.aiHand.map(c => {
             if (game.isGameOver) {
                 return `<div class="card"><img class="c-img-front" src="${c.img}"><div class="c-name">${c.name}</div></div>`;
@@ -249,6 +245,8 @@ for (let i = fullDeck.length - 1; i > 0; i--) {
             const el = document.getElementById(`tag-${t.name.replace(/\s/g,'')}`); 
             if(el) el.className = ok ? 'team-tag active' : 'team-tag'; 
         });
+        
+        // Gọi checkEndGame cuối cùng
         checkEndGame();
     }
 
@@ -270,10 +268,8 @@ for (let i = fullDeck.length - 1; i > 0; i--) {
         }
     }
 
-    // SỬA LỖI 2: Không dừng đồng hồ khi rút bài để tạo áp lực thời gian
     function playerDraw() { 
         if(game.turn !== 'p' || isPaused || game.deck.length === 0) return;
-        // Đã xóa lệnh clearInterval(game.iv);
         game.tempDraw = game.deck.shift(); 
         document.getElementById('decision-modal').classList.remove('hidden'); 
         document.getElementById('modal-img').src = game.tempDraw.img; 
@@ -297,13 +293,108 @@ for (let i = fullDeck.length - 1; i > 0; i--) {
     }
     
     function nextTurn() { 
-        // SỬA LỖI 2 (Phần bổ sung): Nếu hết giờ mà đang rút bài dở thì tự động trả về bàn và đóng modal
         if(game.tempDraw) { 
             game.board.push(game.tempDraw); 
             game.tempDraw = null; 
             document.getElementById('decision-modal').classList.add('hidden'); 
         }
-
         game.turn = (game.turn === 'p' ? 'ai' : 'p'); 
         updateUI(); 
-        startTimer();
+        startTimer(); 
+    }
+    
+    function aiMove() { 
+        if (isPaused) return;
+        let acted = false;
+        for (let ah of game.aiHand) {
+            let target = game.board.find(bc => teams.some(t => t.members.includes(ah.id) && t.members.includes(bc.id)));
+            if (target) { game.aiCap.push(ah, target); game.aiHand = game.aiHand.filter(x => x.id !== ah.id); game.board = game.board.filter(x => x.id !== target.id); acted = true; break; }
+        }
+        if (!acted) {
+            let target = game.board.find(bc => game.aiCap.some(ac => teams.some(t => t.members.includes(ac.id) && t.members.includes(bc.id))));
+            if (target) { game.aiCap.push(target); game.board = game.board.filter(x => x.id !== target.id); acted = true; }
+        }
+        if (!acted && game.deck.length > 0) {
+            let c = game.deck.shift();
+            let linkCap = game.aiCap.some(ac => teams.some(t => t.members.includes(ac.id) && t.members.includes(c.id)));
+            let linkHand = game.aiHand.find(ah => teams.some(t => t.members.includes(ah.id) && t.members.includes(c.id)));
+            if (linkCap) { game.aiCap.push(c); } 
+            else if (linkHand) { game.aiCap.push(c, linkHand); game.aiHand = game.aiHand.filter(x => x.id !== linkHand.id); } 
+            else { 
+                if(Math.random() > 0.5) { game.aiHand.push(c); } else { game.board.push(c); }
+            }
+            acted = true;
+        }
+        nextTurn(); 
+    }
+
+    function autoMoveToEnd(playerHand, playerCap) {
+        let changed = true;
+        while(changed) {
+            changed = false;
+            for(let i=0; i<playerHand.length; i++) {
+                let c = playerHand[i];
+                if(playerCap.some(pc => teams.some(t => t.members.includes(pc.id) && t.members.includes(c.id)))) {
+                    playerCap.push(c); playerHand.splice(i, 1); changed = true; break;
+                }
+            }
+            if(changed) continue;
+            for(let i=0; i<playerHand.length; i++) {
+                for(let j=i+1; j<playerHand.length; j++) {
+                    if(teams.some(t => t.members.includes(playerHand[i].id) && t.members.includes(playerHand[j].id))) {
+                        playerCap.push(playerHand[i], playerHand[j]);
+                        playerHand.splice(j, 1); playerHand.splice(i, 1);
+                        changed = true; break;
+                    }
+                }
+                if(changed) break;
+            }
+        }
+    }
+    
+    function hasPossibleMove(hand, cap) {
+        const handMatch = hand.some(h => game.board.some(b => teams.some(t => t.members.includes(h.id) && t.members.includes(b.id))));
+        const capMatch = game.board.some(b => cap.some(c => teams.some(t => t.members.includes(c.id) && t.members.includes(b.id))));
+        return handMatch || capMatch;
+    }
+
+    function checkEndGame() { 
+        // QUAN TRỌNG: Ngăn chặn vòng lặp vô tận
+        if (game.isGameOver) return;
+
+        const noMovesLeft = game.deck.length === 0 && !hasPossibleMove(game.pHand, game.pCap) && !hasPossibleMove(game.aiHand, game.aiCap);
+
+        if((game.board.length === 0 && game.deck.length === 0) || 
+           (game.deck.length === 0 && (game.pHand.length === 0 || game.aiHand.length === 0)) ||
+           noMovesLeft) { 
+            
+            clearInterval(game.iv);
+            game.isGameOver = true; // Đánh dấu game over ngay lập tức
+            autoMoveToEnd(game.pHand, game.pCap);
+            autoMoveToEnd(game.aiHand, game.aiCap);
+            
+            updateUI(); // Gọi updateUI 1 lần cuối để lật bài (nhờ dòng check ở đầu hàm này mà nó sẽ không lặp lại)
+            
+            let pF = calculateScore(game.pCap, game.pHand, true);
+            let aF = calculateScore(game.aiCap, game.aiHand, true);
+            showEndPopup(pF, aF);
+        } 
+    }
+
+    function showEndPopup(pScore, aiScore) {
+        const modal = document.getElementById('end-modal');
+        document.getElementById('end-score-ai').innerText = `Anh Tài: ${aiScore}`;
+        document.getElementById('end-score-p').innerText = `Gai Con: ${pScore}`;
+        let winner = pScore > aiScore ? "Gai Con" : (aiScore > pScore ? "Anh Tài" : "Hòa nhau");
+        document.getElementById('end-winner').innerText = `Chúc mừng người chiến thắng là ${winner}`;
+        modal.classList.remove('hidden');
+    }
+    
+    function togglePause() { isPaused = true; document.getElementById('pause-modal').classList.remove('hidden'); }
+    function resumeGame() { isPaused = false; document.getElementById('pause-modal').classList.add('hidden'); }
+    function resetGame() { document.getElementById('reset-modal').classList.remove('hidden'); }
+    function confirmReset() { document.getElementById('reset-modal').classList.add('hidden'); startGame(); }
+    function closeReset() { document.getElementById('reset-modal').classList.add('hidden'); }
+</script>
+</body>
+</html>
