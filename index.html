@@ -71,7 +71,11 @@
         <div id="end-score-ai" style="color:#ff4757; font-size: 20px; font-weight: bold; margin-bottom: 10px;"></div>
         <div id="end-score-p" style="color:#2ecc71; font-size: 20px; font-weight: bold; margin-bottom: 10px;"></div>
         <div id="end-winner" style="color:#f1c40f; font-size: 18px; margin: 20px 0; border: 1px dashed #f1c40f; padding: 10px;"></div>
-        <button class="btn" style="background:#3498db; padding: 12px;" onclick="location.reload()">BẮT ĐẦU VÁN MỚI</button>
+        
+        <div style="display:flex; gap:10px;">
+            <button class="btn" style="background:#3498db; flex:1; padding: 12px;" onclick="location.reload()">VÁN MỚI</button>
+            <button class="btn" style="background:#7f8c8d; flex:1; padding: 12px;" onclick="hideEndModal()">XEM LẠI</button>
+        </div>
     </div>
 </div>
 
@@ -311,7 +315,9 @@ function resolveDraw(isK) {
 }
 
 function startTimer() { 
-    clearInterval(game.iv); game.time = 15; document.getElementById('timer-val').innerText = game.time;
+    clearInterval(game.iv);
+    if (game.isGameOver) return;
+    game.time = 15; document.getElementById('timer-val').innerText = game.time;
     game.iv = setInterval(() => { 
         if(!isPaused) { 
             game.time--; 
@@ -452,7 +458,9 @@ function autoMoveToEnd(playerHand, playerCap) {
         document.getElementById('end-winner').innerText = `Chúc mừng người chiến thắng là ${winner}`;
         modal.classList.remove('hidden');
     }
-    
+    function hideEndModal() {
+    document.getElementById('end-modal').classList.add('hidden');
+}
     function togglePause() { isPaused = true; document.getElementById('pause-modal').classList.remove('hidden'); }
     function resumeGame() { isPaused = false; document.getElementById('pause-modal').classList.add('hidden'); }
     function resetGame() { document.getElementById('reset-modal').classList.remove('hidden'); }
@@ -461,6 +469,7 @@ function autoMoveToEnd(playerHand, playerCap) {
 </script>
 </body>
 </html>
+
 
 
 
