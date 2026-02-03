@@ -188,8 +188,10 @@
         document.getElementById('admin-panel').classList.add('hidden');
         document.getElementById('game-screen').classList.remove('hidden');
         let fullDeck = AT_NAMES.map((n, i) => ({ id: i+1, name: n, img: drive(at_images[i+1]) }));
-        fullDeck.sort(() => Math.random() - 0.5);
-        game.pHand = fullDeck.splice(0, 7); game.aiHand = fullDeck.splice(0, 7);
+for (let i = fullDeck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [fullDeck[i], fullDeck[j]] = [fullDeck[j], fullDeck[i]];
+}        game.pHand = fullDeck.splice(0, 7); game.aiHand = fullDeck.splice(0, 7);
         game.board = fullDeck.splice(0, 8); game.deck = fullDeck;
         game.pCap = []; game.aiCap = []; game.turn = 'p';
         document.getElementById('side-teams').innerHTML = teams.map(t => `<div id="tag-${t.name.replace(/\s/g,'')}" class="team-tag">${t.name}</div>`).join('');
@@ -386,4 +388,5 @@
 </script>
 </body>
 </html>
+
 
