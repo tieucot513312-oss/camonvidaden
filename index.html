@@ -53,18 +53,18 @@
         .btn { color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; font-size: 12px; }
         .hidden { display: none !important; }
         @keyframes pulse { 0% { opacity: 0.7; } 100% { opacity: 1; } }
-.btn-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* Chia 2 cột đều nhau */
-    gap: 10px; /* Khoảng cách giữa các nút */
-    margin-top: 10px;
-}
-.btn-grid .btn {
-    width: 100%;
-    margin: 0 !important; /* Xóa margin cũ nếu có */
-    font-size: 11px; /* Giảm nhẹ font chữ để vừa khung */
-    white-space: nowrap; /* Tránh xuống dòng chữ */
-}
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Chia 2 cột đều nhau */
+            gap: 10px; /* Khoảng cách giữa các nút */
+            margin-top: 10px;
+        }
+        .btn-grid .btn {
+            width: 100%;
+            margin: 0 !important; /* Xóa margin cũ nếu có */
+            font-size: 11px; /* Giảm nhẹ font chữ để vừa khung */
+            white-space: nowrap; /* Tránh xuống dòng chữ */
+        }
     </style>
 </head>
 <body>
@@ -93,41 +93,8 @@
 
 <div id="pause-modal" class="modal-overlay hidden"><div class="modal-content"><h2 style="color:var(--accent);">☕ NGHỈ GIẢI LAO</h2><button class="btn" style="background:#3498db;" onclick="resumeGame()">OK TIẾP TỤC ▶</button></div></div>
 <div id="reset-modal" class="modal-overlay hidden"><div class="modal-content"><h2 style="color:#ff4757;">⚠️ CẢNH BÁO</h2><p>Bạn xác nhận muốn tạo lại ván mới?</p><div style="display:flex; gap:10px;"><button class="btn" style="background:#e74c3c; flex:1;" onclick="confirmReset()">CHẮC RỒI</button><button class="btn" style="background:#95a5a6; flex:1;" onclick="closeReset()">THÔI CHƠI TIẾP</button></div></div></div>
-<div id="conha-modal" class="modal-overlay hidden">
-    <div class="modal-content" style="background-color: #222; border: 2px solid #FFC107; border-radius: 12px; width: 420px; max-width: 90%; text-align: center; padding: 25px; color: #fff; font-family: sans-serif; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-        
-        <h2 style="color: #fff; margin-top: 0; font-size: 30px; margin-bottom: 8px; font-weight: bold;">
-            Bạn muốn đổi qua phiên bản cợt nhã?
-        </h2>
-        <p style="color: #dda0dd; font-weight: bold; font-size: 18px; margin-bottom: 30px;">
-            Khó hơn, giành giật hơn nhưng mà xem lưu ý giúp mình.
-        <p style="color: #ff4757; font-weight: bold; font-size: 16px; margin-bottom: 6px;">
-             Lưu ý: Phiên bản này có zone cúp le (có lên xe)
-        </p>
 
-        <div style="color: #ddd; font-size: 14px; line-height: 1.6; margin-bottom: 5px; text-align: left; padding: 0 10px;">
-            <p style="margin-bottom: 5px;">• Nếu bạn không cùng zone với mình, hãy ở lại đây, chúng ta vẫn là gia đình - Gai Con. </p>
-            <p style="margin-bottom: 5px;">• Nếu bạn không cùng zone với mình mà vẫn muốn chơi tiếp, hy vọng bạn chỉ xem đây là trò chơi, đừng đặt nặng vấn đề.</p>
-            <p>• Nếu cùng zone, come on bấy bì!</p>
-        </div>
-
-        <div style="display: flex; gap: 10px; justify-content: center;">
-            
-            <button onclick="closeCoNha()" 
-                    style="flex: 1; background-color: #555; color: #fff; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px;">
-                Thôi ở lại đây
-            </button>
-            
-            <button onclick="goToCoNha()" 
-                    style="flex: 1; background-color: #3498db; color: #fff; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px;">
-                Chơi luôn (Coming soon)
-            </button>
-            
-        </div>
-
-    </div>
-</div>
-       <div id="ver2-modal" class="modal-overlay hidden">
+<div id="ver2-modal" class="modal-overlay hidden">
     <div class="modal-content" style="background-color: #222; border: 2px solid #f39c12; border-radius: 12px; width: 400px; max-width: 90%; text-align: center; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
         
         <h2 style="color: #fff; margin-top: 0; font-size: 24px; margin-bottom: 10px; font-weight: bold;">
@@ -198,8 +165,7 @@
     <div class="btn-grid">
     <button class="btn" style="background:#3498db;" onclick="togglePause()">Tạm dừng</button>
     <button class="btn" style="background:#9b59b6;" onclick="resetGame()">Làm lại</button>
-    <button class="btn" style="background:#ffffff; color:#000; border: 1px solid #ccc;" onclick="showCoNhaModal()">Bản Cợt Nhã</button>
-    <button class="btn" style="background:#f39c12; color:#000;" onclick="showVer2Modal()">Bản 2.0</button>
+    <button class="btn" style="background:#f39c12; color:#000; grid-column: span 2;" onclick="showVer2Modal()">Bản 2.0</button>
 </div>
 </div>
 
@@ -521,6 +487,7 @@ function autoMoveToEnd(playerHand, playerCap) {
 
 function showEndPopup(pScore, aiScore) {
     const modal = document.getElementById('end-modal');
+    modal.classList.remove('hidden');
     document.getElementById('end-score-ai').innerText = `Anh Tài: ${aiScore}`;
     document.getElementById('end-score-p').innerText = `Gai Con: ${pScore}`;
 
@@ -528,54 +495,54 @@ function showEndPopup(pScore, aiScore) {
     if (pScore > aiScore) {
         resultText = "Thắng rồi, NÉT.";
     } else if (aiScore > pScore) {
-        resultText = "Đen thôi, ĐỎ QUÊN ĐI";
+        resultText = "Thua mất rồi, cố lên ván sau!";
     } else {
-        resultText = "TRÁI ĐẤT TRÒN";
+        resultText = "Hòa nhau rồi!";
     }
-
     document.getElementById('end-winner').innerText = resultText;
-    modal.classList.remove('hidden');
 }
-    function hideEndModal() {
+
+function hideEndModal() {
     document.getElementById('end-modal').classList.add('hidden');
 }
-    function togglePause() { isPaused = true; document.getElementById('pause-modal').classList.remove('hidden'); }
-    function resumeGame() { isPaused = false; document.getElementById('pause-modal').classList.add('hidden'); }
-    function resetGame() { document.getElementById('reset-modal').classList.remove('hidden'); }
-    function confirmReset() { document.getElementById('reset-modal').classList.add('hidden'); startGame(); }
-    function closeReset() { document.getElementById('reset-modal').classList.add('hidden'); }
-    function showCoNhaModal() {
-    isPaused = true; // Tạm dừng bộ đếm thời gian của game
-    document.getElementById('conha-modal').classList.remove('hidden');
+
+function togglePause() {
+    isPaused = !isPaused;
+    if (isPaused) {
+        document.getElementById('pause-modal').classList.remove('hidden');
+    }
 }
 
-function closeCoNha() {
-    isPaused = false; // Tiếp tục game
-    document.getElementById('conha-modal').classList.add('hidden');
+function resumeGame() {
+    isPaused = false;
+    document.getElementById('pause-modal').classList.add('hidden');
 }
-    
-function goToCoNha() {
-    closeCoNha();
-    window.location.href = 'https://forms.gle/a3oqYKuHyV9TppEx5';
+
+function resetGame() {
+    document.getElementById('reset-modal').classList.remove('hidden');
 }
-    // --- Code xử lý cho nút Bản 2.0 ---
+
+function confirmReset() {
+    document.getElementById('reset-modal').classList.add('hidden');
+    startGame();
+}
+
+/div>
+function closeReset() {
+    document.getElementById('reset-modal').classList.add('hidden');
+}
 
 function showVer2Modal() {
-    isPaused = true; // Tạm dừng game khi mở popup
     document.getElementById('ver2-modal').classList.remove('hidden');
 }
 
 function closeVer2() {
-    isPaused = false; // Chơi tiếp khi đóng
     document.getElementById('ver2-modal').classList.add('hidden');
 }
 
 function goToVer2() {
-    window.location.href = 'https://atvncg2024v2.vercel.app/?play=true'; 
+    window.location.search = "?play=true&v=2";
 }
 </script>
 </body>
 </html>
-
-
-
